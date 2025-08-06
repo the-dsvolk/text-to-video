@@ -34,7 +34,7 @@ jobs:
 
     - name: Install BentoML and PyTorch
       run: |
-        pip install bentoml>=1.3.0
+        pip install bentoml==1.4.19
         pip install torch>=2.0.0 torchvision>=0.15.0 torchaudio>=2.0.0 --index-url https://download.pytorch.org/whl/cu128
 
     - name: Set up Docker Buildx

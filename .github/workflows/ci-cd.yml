@@ -108,7 +108,7 @@ jobs:
         python-version: '3.12'
 
     - name: Install BentoML
-      run: pip install bentoml==1.1.11
+      run: pip install bentoml==1.4.19
 
     - name: Extract Bento metadata
       id: bento-meta
