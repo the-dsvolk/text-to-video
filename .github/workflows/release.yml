@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install BentoML
+      run: pip install bentoml==1.1.11
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.12.0'
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract tag version
+      id: version
+      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    # Build and push FastAPI Gateway
+    - name: Build and push FastAPI Gateway
+      uses: docker/build-push-action@v5
+      with:
+        context: ./apps/fastapi-gateway
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ github.repository_owner }}/fastapi-video-gateway:${{ steps.version.outputs.version }}
+          ${{ env.REGISTRY }}/${{ github.repository_owner }}/fastapi-video-gateway:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Build and push BentoML Service
+    - name: Build and push BentoML Service
+      working-directory: ./apps/bento-service
+      run: |
+        bentoml build
+        BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
+        
+        # Build container
+        TEMP_TAG="temp-bento:latest"
+        bentoml containerize $BENTO_TAG -t $TEMP_TAG
+        
+        # Tag and push
+        docker tag $TEMP_TAG ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:${{ steps.version.outputs.version }}
+        docker tag $TEMP_TAG ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:latest
+        
+        docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:${{ steps.version.outputs.version }}
+        docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:latest
+
+    # Package and push Helm chart
+    - name: Update Helm chart version
+      run: |
+        sed -i 's/version: .*/version: ${{ steps.version.outputs.version }}/' helm/text-to-video/Chart.yaml
+        sed -i 's/appVersion: .*/appVersion: "${{ steps.version.outputs.version }}"/' helm/text-to-video/Chart.yaml
+
+    - name: Package and push Helm chart
+      run: |
+        helm package helm/text-to-video --version ${{ steps.version.outputs.version }}
+        helm push text-to-video-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
+
+    # Create GitHub Release
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ steps.version.outputs.version }}
+        body: |
+          ## Changes in this release
+          
+          ### Container Images
+          - `${{ env.REGISTRY }}/${{ github.repository_owner }}/fastapi-video-gateway:${{ steps.version.outputs.version }}`
+          - `${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:${{ steps.version.outputs.version }}`
+          
+          ### Helm Chart
+          ```bash
+          helm install text-to-video oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm/text-to-video --version ${{ steps.version.outputs.version }}
+          ```
+          
+          ### Deployment
+          ```bash
+          # Update image tags in values.yaml or use --set
+          helm upgrade --install text-to-video helm/text-to-video \
+            --set fastapi.image.tag=${{ steps.version.outputs.version }} \
+            --set bentoService.image.tag=${{ steps.version.outputs.version }}
+          ```
+        draft: false
+        prerelease: false
+
+    # Security scanning for release images
+    - name: Run Trivy scan on FastAPI image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/fastapi-video-gateway:${{ steps.version.outputs.version }}
+        format: 'table'
+
+    - name: Run Trivy scan on Bento image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:${{ steps.version.outputs.version }}
+        format: 'table'
+      continue-on-error: true  # AI images often have false positives

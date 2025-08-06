@@ -1,0 +1,26 @@
+[flake8]
+max-line-length = 112
+extend-ignore = 
+    # E203: whitespace before ':' (conflicts with black)
+    E203,
+    # W503: line break before binary operator (conflicts with black)
+    W503,
+    # E501: line too long (handled by black)
+    E501
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .env,
+    env,
+    dist,
+    build,
+    *.egg-info,
+    .pytest_cache,
+    .mypy_cache,
+    .ruff_cache
+per-file-ignores =
+    __init__.py:F401
+max-complexity = 10
+import-order-style = google

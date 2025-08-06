@@ -1,0 +1,149 @@
+# Default values for text-to-video chart
+
+global:
+  imageRegistry: ghcr.io
+  imagePullSecrets: []
+
+# Namespace configuration
+namespace:
+  create: true
+  name: text-to-video-app
+
+# FastAPI Gateway configuration
+fastapi:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: ghcr.io/the-dmitry-volkov/fastapi-video-gateway
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 8000
+    annotations: {}
+  
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: text-to-video.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+  
+  env:
+    SHARED_VOLUME_PATH: "/data/videos"
+    KSERVE_URL: "http://text-to-video-generator.text-to-video-app.svc.cluster.local/v1/models/text-to-video-generator:predict"
+
+# BentoML service configuration (via KServe)
+bentoService:
+  enabled: true
+  
+  image:
+    repository: ghcr.io/the-dmitry-volkov/bento-video-service
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+      memory: 16Gi
+      cpu: 4
+    requests:
+      nvidia.com/gpu: 1
+      memory: 8Gi
+      cpu: 2
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 0  # Scale to zero when not in use
+    maxReplicas: 3
+    scaleToZero:
+      enabled: true
+      timeoutSeconds: 300
+  
+  env:
+    SHARED_VOLUME_PATH: "/shared/videos"
+    HF_HOME: "/tmp/huggingface"
+    TRANSFORMERS_CACHE: "/tmp/huggingface/transformers"
+    CUDA_VISIBLE_DEVICES: "0"
+
+# Storage configuration
+storage:
+  enabled: true
+  
+  # Persistent Volume Claim
+  pvc:
+    name: shared-videos-pvc
+    accessMode: ReadWriteMany
+    size: 100Gi
+    storageClass: ""  # Use default storage class
+  
+  # Optional: Define a specific Persistent Volume
+  pv:
+    enabled: false
+    name: shared-videos-pv
+    capacity: 100Gi
+    accessMode: ReadWriteMany
+    hostPath: /data/shared-videos  # For local testing
+    storageClass: manual
+
+# Redis removed - using file-system based job tracking
+
+# Security configuration
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 2000
+
+# Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Node selector for GPU nodes
+nodeSelector:
+  # Example: Select nodes with GPU
+  # accelerator: nvidia-tesla-v100
+
+# Tolerations for GPU nodes
+tolerations: []
+  # Example: Tolerate GPU node taints
+  # - key: nvidia.com/gpu
+  #   operator: Exists
+  #   effect: NoSchedule
+
+# Affinity rules
+affinity: {}
+
+# Monitoring (if Prometheus is available)
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    path: /metrics

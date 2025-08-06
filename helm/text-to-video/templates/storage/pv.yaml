@@ -1,0 +1,20 @@
+{{- if and .Values.storage.enabled .Values.storage.pv.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.storage.pv.name }}
+  labels:
+    {{- include "text-to-video.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: {{ .Values.storage.pv.capacity }}
+  accessModes:
+    - {{ .Values.storage.pv.accessMode }}
+  {{- if .Values.storage.pv.storageClass }}
+  storageClassName: {{ .Values.storage.pv.storageClass }}
+  {{- end }}
+  hostPath:
+    path: {{ .Values.storage.pv.hostPath }}
+    type: DirectoryOrCreate
+{{- end }}

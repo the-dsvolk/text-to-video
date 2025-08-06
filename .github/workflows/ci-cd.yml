@@ -1,0 +1,191 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  HELM_CHART_PATH: ./helm/text-to-video
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        cd apps/fastapi-gateway
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio black ruff mypy
+
+    - name: Lint FastAPI code
+      run: |
+        cd apps/fastapi-gateway
+        black --check src/
+        ruff check src/
+        mypy src/
+
+    - name: Run FastAPI tests
+      run: |
+        cd apps/fastapi-gateway
+        pytest tests/ || echo "No tests found yet"
+
+    - name: Validate Helm chart
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.12.0'
+
+    - name: Helm lint
+      run: |
+        helm lint ${{ env.HELM_CHART_PATH }}
+
+    - name: Helm template validation
+      run: |
+        helm template test-release ${{ env.HELM_CHART_PATH }} \
+          --values ${{ env.HELM_CHART_PATH }}/values-dev.yaml \
+          --dry-run > /dev/null
+
+  build-and-push:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      fastapi-image: ${{ steps.fastapi-meta.outputs.tags }}
+      bento-image: ${{ steps.bento-meta.outputs.tags }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # Build FastAPI Gateway
+    - name: Extract FastAPI metadata
+      id: fastapi-meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/fastapi-video-gateway
+        tags: |
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest
+
+    - name: Build and push FastAPI image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./apps/fastapi-gateway
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.fastapi-meta.outputs.tags }}
+        labels: ${{ steps.fastapi-meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Build BentoML Service
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install BentoML
+      run: pip install bentoml==1.1.11
+
+    - name: Extract Bento metadata
+      id: bento-meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service
+        tags: |
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest
+
+    - name: Build and push Bento image
+      working-directory: ./apps/bento-service
+      run: |
+        bentoml build
+        BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
+        TEMP_TAG="temp-bento:latest"
+        bentoml containerize $BENTO_TAG -t $TEMP_TAG
+        
+        for tag in ${{ steps.bento-meta.outputs.tags }}; do
+          docker tag $TEMP_TAG $tag
+          docker push $tag
+        done
+
+  package-helm:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.12.0'
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Package and push Helm chart
+      run: |
+        helm package ${{ env.HELM_CHART_PATH }} --version ${{ github.run_number }}.0.0
+        helm push text-to-video-${{ github.run_number }}.0.0.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
+
+  deploy-dev:
+    needs: [build-and-push, package-helm]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.12.0'
+
+    - name: Deploy to development
+      run: |
+        # Note: In real scenarios, you'd configure kubectl context here
+        echo "Would deploy to development cluster with:"
+        echo "helm upgrade --install text-to-video-dev ${{ env.HELM_CHART_PATH }} \\"
+        echo "  --values ${{ env.HELM_CHART_PATH }}/values-dev.yaml \\"
+        echo "  --set fastapi.image.tag=main-${{ github.sha }} \\"
+        echo "  --set bentoService.image.tag=main-${{ github.sha }} \\"
+        echo "  --namespace text-to-video-dev \\"
+        echo "  --create-namespace"

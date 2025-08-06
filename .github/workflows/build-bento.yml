@@ -1,0 +1,102 @@
+name: Build BentoML Service
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'apps/bento-service/**'
+      - '.github/workflows/build-bento.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/bento-service/**'
+      - '.github/workflows/build-bento.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: bento-video-service
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install BentoML
+      run: |
+        pip install bentoml==1.1.11
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build Bento
+      working-directory: ./apps/bento-service
+      run: |
+        bentoml build
+
+    - name: Get Bento tag
+      id: bento-tag
+      working-directory: ./apps/bento-service
+      run: |
+        BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
+        echo "bento_tag=$BENTO_TAG" >> $GITHUB_OUTPUT
+
+    - name: Containerize Bento
+      working-directory: ./apps/bento-service
+      run: |
+        # Create a temporary tag for building
+        TEMP_TAG="temp-bento:latest"
+        bentoml containerize ${{ steps.bento-tag.outputs.bento_tag }} -t $TEMP_TAG
+        
+        # Re-tag with proper registry tags
+        for tag in ${{ steps.meta.outputs.tags }}; do
+          docker tag $TEMP_TAG $tag
+        done
+
+    - name: Push Docker images
+      run: |
+        for tag in ${{ steps.meta.outputs.tags }}; do
+          docker push $tag
+        done
+
+    - name: Run security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+      continue-on-error: true  # AI images often have false positives
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'

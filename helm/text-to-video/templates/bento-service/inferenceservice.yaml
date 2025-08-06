@@ -1,0 +1,56 @@
+{{- if .Values.bentoService.enabled }}
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: {{ include "text-to-video.fullname" . }}-bento
+  namespace: {{ include "text-to-video.namespace" . }}
+  labels:
+    {{- include "text-to-video.bento.labels" . | nindent 4 }}
+  annotations:
+    autoscaling.knative.dev/minScale: "{{ .Values.bentoService.autoscaling.minReplicas }}"
+    autoscaling.knative.dev/maxScale: "{{ .Values.bentoService.autoscaling.maxReplicas }}"
+    {{- if .Values.bentoService.autoscaling.scaleToZero.enabled }}
+    autoscaling.knative.dev/scaleToZero: "true"
+    autoscaling.knative.dev/scaleDownDelay: "{{ .Values.bentoService.autoscaling.scaleToZero.timeoutSeconds }}s"
+    {{- end }}
+spec:
+  predictor:
+    serviceAccountName: {{ include "text-to-video.serviceAccountName" . }}
+    containers:
+      - name: kserve-container
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.bentoService.image.repository }}:{{ .Values.bentoService.image.tag }}"
+        imagePullPolicy: {{ .Values.bentoService.image.pullPolicy }}
+        env:
+          {{- range $key, $value := .Values.bentoService.env }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
+        resources:
+          {{- toYaml .Values.bentoService.resources | nindent 10 }}
+        volumeMounts:
+          - name: shared-videos
+            mountPath: {{ .Values.bentoService.env.SHARED_VOLUME_PATH }}
+          - name: huggingface-cache
+            mountPath: /tmp/huggingface
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+    volumes:
+      - name: shared-videos
+        persistentVolumeClaim:
+          claimName: {{ .Values.storage.pvc.name }}
+      - name: huggingface-cache
+        emptyDir:
+          sizeLimit: 50Gi
+    {{- with .Values.nodeSelector }}
+    nodeSelector:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+    tolerations:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+    affinity:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+{{- end }}

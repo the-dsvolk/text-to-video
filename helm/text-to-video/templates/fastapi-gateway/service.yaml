@@ -1,0 +1,22 @@
+{{- if .Values.fastapi.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "text-to-video.fullname" . }}-fastapi
+  namespace: {{ include "text-to-video.namespace" . }}
+  labels:
+    {{- include "text-to-video.fastapi.labels" . | nindent 4 }}
+  {{- with .Values.fastapi.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.fastapi.service.type }}
+  ports:
+    - port: {{ .Values.fastapi.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "text-to-video.fastapi.selectorLabels" . | nindent 4 }}
+{{- end }}

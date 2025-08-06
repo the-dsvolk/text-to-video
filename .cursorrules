@@ -1,0 +1,18 @@
+# Cursor Rules for Text-to-Video Project
+
+## Container Registry Preferences
+- Use GitHub Container Registry (ghcr.io) when possible for storing and deploying container images
+- Prefer GitHub Container Registry over other registries like Docker Hub, AWS ECR, or Google Artifact Registry when feasible
+
+## AI Model Hub Preferences
+- Use Hugging Face Hub when possible for accessing pre-trained models, datasets, and AI components
+- Prefer Hugging Face transformers and diffusers libraries for AI model implementations
+
+## Technology Stack Requirements
+- Always use CUDA 12.8 for GPU acceleration and NVIDIA container base images
+- Always use Python 3.12 as the standard Python version across all services
+- Always use PyTorch 2.8 for deep learning frameworks and model implementations
+- Ensure all Docker images, virtual environments, and dependencies are compatible with these versions
+
+## Project Configuration Standards
+- Always use email: the.dmitry.s.volkov@gmail.com for author information in project files

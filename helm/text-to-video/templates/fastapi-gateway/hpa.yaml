@@ -1,0 +1,33 @@
+{{- if and .Values.fastapi.enabled .Values.fastapi.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "text-to-video.fullname" . }}-fastapi
+  namespace: {{ include "text-to-video.namespace" . }}
+  labels:
+    {{- include "text-to-video.fastapi.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "text-to-video.fullname" . }}-fastapi
+  minReplicas: {{ .Values.fastapi.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.fastapi.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.fastapi.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.fastapi.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.fastapi.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.fastapi.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

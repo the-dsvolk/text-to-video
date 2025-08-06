@@ -1,0 +1,37 @@
+service: "service:TextToVideoGenerator"
+labels:
+  owner: the-dmitry-volkov
+  project: text-to-video-generation
+description: "Text-to-Video generation service using Stable Diffusion XL and Stable Video Diffusion"
+
+include:
+- "src/"
+- "requirements.txt"
+
+exclude:
+- "__pycache__/"
+- ".pytest_cache/"
+- "*.pyc"
+- "*.pyo" 
+- "*.pyd"
+- ".DS_Store"
+
+python:
+  packages:
+    - torch==2.8.0
+    - diffusers==0.30.0
+    - transformers==4.45.0
+    - accelerate==0.34.0
+    - xformers==0.0.28
+    - Pillow==10.4.0
+    - safetensors==0.4.5
+    - huggingface-hub==0.25.0
+    - numpy==1.26.4
+
+docker:
+  python_version: "3.12"
+  system_packages:
+    - git
+    - wget
+    - curl
+  base_image: "nvidia/cuda:12.8-devel-ubuntu22.04"
