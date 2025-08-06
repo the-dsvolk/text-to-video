@@ -21,7 +21,7 @@ class TextToVideoGenerator:
         import torch
         from diffusers import StableDiffusionPipeline, StableVideoDiffusionPipeline
         import numpy as np
-        
+
         # Try to import imageio
         try:
             import imageio
@@ -32,13 +32,13 @@ class TextToVideoGenerator:
             print(f"⚠️ imageio not available ({e}), will use ffmpeg fallback")
             self.imageio = None
             self.has_imageio = False
-        
+
         # Store imports as instance variables for use in other methods
         self.torch = torch
         self.StableDiffusionPipeline = StableDiffusionPipeline
         self.StableVideoDiffusionPipeline = StableVideoDiffusionPipeline
         self.np = np
-        
+
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.video_storage_path = Path(VIDEO_STORAGE_PATH)
         self.video_storage_path.mkdir(parents=True, exist_ok=True)
@@ -81,19 +81,19 @@ class TextToVideoGenerator:
         """Export video using imageio - preferred method."""
         try:
             print(f"[{job_id}] Using imageio for video export...")
-            
+
             # Convert PIL images to numpy arrays if needed
             if hasattr(video_frames[0], 'convert'):  # PIL Image
                 video_frames = [self.np.array(frame.convert('RGB')) for frame in video_frames]
-            
+
             # Export using imageio
             with self.imageio.get_writer(str(output_path), fps=7) as writer:
                 for frame in video_frames:
                     writer.append_data(frame)
-            
+
             print(f"[{job_id}] Video exported successfully with imageio")
             return True
-            
+
         except Exception as e:
             print(f"[{job_id}] imageio export failed: {e}")
             return False
@@ -102,15 +102,15 @@ class TextToVideoGenerator:
         """Export video using system ffmpeg - fallback method."""
         import subprocess
         import shutil
-        
+
         # Create temp directory for frames
         temp_dir = self.video_storage_path / f"temp_{job_id}"
         temp_dir.mkdir(exist_ok=True)
-        
+
         try:
             print(f"[{job_id}] Using ffmpeg fallback for video export...")
             print(f"[{job_id}] Saving {len(video_frames)} frames to temp directory...")
-            
+
             # Save frames as PNG files
             for i, frame in enumerate(video_frames):
                 frame_path = temp_dir / f"frame_{i:04d}.png"
@@ -119,22 +119,22 @@ class TextToVideoGenerator:
                 else:  # numpy array
                     from PIL import Image
                     Image.fromarray(frame).save(frame_path)
-            
+
             print(f"[{job_id}] Creating video with ffmpeg...")
-            
+
             # Use system ffmpeg to create video
             cmd = [
-                "ffmpeg", "-y", "-r", "7", 
+                "ffmpeg", "-y", "-r", "7",
                 "-i", str(temp_dir / "frame_%04d.png"),
-                "-c:v", "libx264", "-pix_fmt", "yuv420p", 
+                "-c:v", "libx264", "-pix_fmt", "yuv420p",
                 "-crf", "23",  # Good quality
                 str(output_path)
             ]
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
             print(f"[{job_id}] Video created successfully with ffmpeg")
             return True
-            
+
         except subprocess.CalledProcessError as e:
             print(f"[{job_id}] FFmpeg error: {e}")
             print(f"[{job_id}] FFmpeg stderr: {e.stderr}")
@@ -177,25 +177,25 @@ class TextToVideoGenerator:
             video_frames = self.svd_pipe(
                 image,
                 num_frames=14,           # Reduced from 25 to save memory
-                decode_chunk_size=4,     # Reduced from 8 to save memory  
+                decode_chunk_size=4,     # Reduced from 8 to save memory
             ).frames[0]
             print(f"[{job_id}] Animation complete.")
 
             # Step 3: Save to shared volume
             output_path = self.video_storage_path / f"{job_id}.mp4"
             print(f"[{job_id}] Exporting video to {output_path}...")
-            
+
             # Try imageio first, fallback to ffmpeg
             success = False
             if self.has_imageio:
                 success = self._export_video_with_imageio(video_frames, output_path, job_id)
-            
+
             if not success:
                 success = self._export_video_with_ffmpeg(video_frames, output_path, job_id)
-            
+
             if not success:
                 raise RuntimeError("Both imageio and ffmpeg export methods failed")
-            
+
             print(f"[{job_id}] Video saved successfully.")
 
             return {
