@@ -44,7 +44,6 @@ class TextToVideoGenerator:
         self.sd_pipe = self.StableDiffusionPipeline.from_pretrained(
             "segmind/tiny-sd",
             torch_dtype=self.dtype,
-            use_safetensors=True,
         )
         self.sd_pipe.to(self.device)
 
