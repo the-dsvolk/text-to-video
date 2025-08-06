@@ -55,7 +55,7 @@ spec:
             {{- toYaml .Values.fastapi.resources | nindent 12 }}
           volumeMounts:
             - name: shared-videos
-              mountPath: {{ .Values.fastapi.env.FASTAPI_SHARED_VOLUME_PATH }}
+              mountPath: {{ .Values.fastapi.env.SHARED_VOLUME_PATH }}
       volumes:
         - name: shared-videos
           persistentVolumeClaim:

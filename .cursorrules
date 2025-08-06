@@ -9,9 +9,9 @@
 - Prefer Hugging Face transformers and diffusers libraries for AI model implementations
 
 ## Technology Stack Requirements
-- Always use CUDA 12.8 for GPU acceleration and NVIDIA container base images
-- Always use Python 3.12 as the standard Python version across all services
-- Always use PyTorch with CUDA 12.8 support (cu128 wheels) for deep learning frameworks and model implementations
+- Always use NVIDIA's official PyTorch containers (nvcr.io/nvidia/pytorch) for GPU acceleration when possible
+- Always use Python 3.12 as the standard Python version across all services (or container's default for NVIDIA images)
+- Prefer NVIDIA's optimized PyTorch over manual PyTorch installations for better performance
 - Ensure all Docker images, virtual environments, and dependencies are compatible with these versions
 
 ## Project Configuration Standards

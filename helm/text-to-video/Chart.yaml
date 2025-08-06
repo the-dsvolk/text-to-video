@@ -22,11 +22,7 @@ maintainers:
   - name:  Dmitry Volkov 
     email: the.dmitry.s.volkov@gmail.com
 
-dependencies:
-  - name: redis
-    version: "18.4.0"
-    repository: https://charts.bitnami.com/bitnami
-    condition: redis.enabled
+
 
 annotations:
   category: AI/ML
