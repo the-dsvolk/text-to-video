@@ -18,6 +18,9 @@ exclude:
 
 python:
   packages:
+    - torch>=2.0.0
+    - torchvision>=0.15.0
+    - torchaudio>=2.0.0
     - diffusers>=0.30.0
     - transformers>=4.44.0
     - accelerate>=0.30.0
@@ -26,6 +29,7 @@ python:
     - safetensors>=0.4.0
     - huggingface-hub>=0.20.0
     - numpy>=1.24.0
+  extra_index_url: https://download.pytorch.org/whl/cu128
 
 docker:
   python_version: "3.12"
@@ -34,4 +38,4 @@ docker:
     - wget
     - curl
     - build-essential
-  base_image: "nvcr.io/nvidia/pytorch:25.02-py3"
+  base_image: "nvidia/cuda:12.8-devel-ubuntu22.04"
