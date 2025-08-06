@@ -14,7 +14,7 @@ The application is composed of two main microservices and a shared storage volum
 
 ## Prerequisites
 
-- **Docker Desktop**: For building container images.
+- **Docker **: For building container images.
 - **kubectl**: For interacting with your Kubernetes cluster.
 - **BentoML**: Install with `pip install bentoml`.
 - **Container Registry**: A place to push your images (e.g., Docker Hub, Google Artifact Registry, AWS ECR).
