@@ -4,11 +4,7 @@ import os
 import bentoml
 from pathlib import Path
 
-# Lazy imports to avoid dependency issues during build
-with bentoml.importing():
-    import torch
-    from diffusers import StableDiffusionXLPipeline, StableVideoDiffusionPipeline
-    from diffusers.utils import export_to_video
+# Import dependencies at runtime only
 
 
 # Configuration - The path where the PersistentVolume is mounted
@@ -24,6 +20,17 @@ class TextToVideoGenerator:
 
     def __init__(self) -> None:
         """Load all models into memory when the service first starts."""
+        # Import dependencies at runtime
+        import torch
+        from diffusers import StableDiffusionXLPipeline, StableVideoDiffusionPipeline
+        from diffusers.utils import export_to_video
+        
+        # Store imports as instance variables for use in other methods
+        self.torch = torch
+        self.StableDiffusionXLPipeline = StableDiffusionXLPipeline
+        self.StableVideoDiffusionPipeline = StableVideoDiffusionPipeline
+        self.export_to_video = export_to_video
+        
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.video_storage_path = Path(VIDEO_STORAGE_PATH)
         self.video_storage_path.mkdir(parents=True, exist_ok=True)
@@ -54,7 +61,7 @@ class TextToVideoGenerator:
 
         # Load Image-to-Video Model (SVD)
         print("Loading Stable Video Diffusion model...")
-        self.svd_pipe = StableVideoDiffusionPipeline.from_pretrained(
+        self.svd_pipe = self.StableVideoDiffusionPipeline.from_pretrained(
             "stabilityai/stable-video-diffusion-img2vid-xt",
             torch_dtype=self.dtype,
             variant="fp16" if self.device == "cuda" else None,
@@ -101,7 +108,7 @@ class TextToVideoGenerator:
             # Step 3: Save to shared volume using diffusers' built-in export
             output_path = self.video_storage_path / f"{job_id}.mp4"
             print(f"[{job_id}] Exporting video to {output_path}...")
-            export_to_video(video_frames, str(output_path), fps=7)
+            self.export_to_video(video_frames, str(output_path), fps=7)
             print(f"[{job_id}] Video saved successfully.")
 
             return {
@@ -128,15 +135,15 @@ class TextToVideoGenerator:
             "status": "healthy",
             "service": "text-to-video-generator",
             "device": self.device,
-            "cuda_available": torch.cuda.is_available(),
+            "cuda_available": self.torch.cuda.is_available(),
         }
 
-        if torch.cuda.is_available():
+        if self.torch.cuda.is_available():
             info.update(
                 {
-                    "gpu_name": torch.cuda.get_device_name(0),
-                    "gpu_memory_total": torch.cuda.get_device_properties(0).total_memory,
-                    "gpu_memory_allocated": torch.cuda.memory_allocated(0),
+                    "gpu_name": self.torch.cuda.get_device_name(0),
+                    "gpu_memory_total": self.torch.cuda.get_device_properties(0).total_memory,
+                    "gpu_memory_allocated": self.torch.cuda.memory_allocated(0),
                 }
             )
 
