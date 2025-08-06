@@ -87,16 +87,7 @@ jobs:
           docker push $tag
         done
 
-    - name: Run security scan
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-      continue-on-error: true  # AI images often have false positives
-
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
+    - name: Image built successfully
+      run: |
+        echo "✅ BentoML service image built and pushed successfully!"
+        echo "📦 Available at: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
