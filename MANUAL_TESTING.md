@@ -25,6 +25,13 @@ chmod 755 ~/video-test/videos ~/video-test/data ~/video-test/cache
 
 ## 3. Run Container with Memory Optimization ✅ WORKING
 
+# Stop and remove current container
+
+```bash
+docker stop bento-video-service
+docker rm bento-video-service
+```
+
 ```bash
 # Run container with optimized PyTorch CUDA memory settings
 docker run -d \
