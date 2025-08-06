@@ -1,0 +1,61 @@
+{
+    // Python Configuration
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.mypyEnabled": false,
+    "python.linting.banditEnabled": false,
+    "python.linting.prospectorEnabled": false,
+    "python.linting.pydocstyleEnabled": false,
+    "python.linting.pylamaEnabled": false,
+    "python.linting.pycodestyleEnabled": false,
+    // Flake8 Configuration
+    "python.linting.flake8Path": "flake8",
+    "python.linting.flake8Args": [
+        "--config=.flake8"
+    ],
+    "python.linting.lintOnSave": true,
+    // Formatting Configuration
+    "python.formatting.provider": "black",
+    "python.formatting.blackPath": "black",
+    "python.formatting.blackArgs": [
+        "--line-length=112",
+        "--target-version=py312"
+    ],
+    // Editor Configuration
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": false,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    // File Association
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        },
+        "editor.rulers": [
+            112
+        ]
+    },
+    // Workspace Settings
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    // Extension Settings
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.completeFunctionParens": true,
+    // Flake8 Extension Settings (if using flake8 extension)
+    "flake8.args": [
+        "--config=.flake8"
+    ],
+    "flake8.severity": {
+        "E": "Error",
+        "F": "Error",
+        "W": "Warning"
+    }
+}

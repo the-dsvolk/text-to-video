@@ -1,0 +1,14 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "ms-python.pylint",
+        "ms-python.isort",
+        "ms-toolsai.jupyter",
+        "charliermarsh.ruff",
+        "donjayamanne.python-environment-manager",
+        "njpwerner.autodocstring",
+        "kevinrose.vsc-python-indent"
+    ]
+}
