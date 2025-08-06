@@ -2,6 +2,7 @@
 
 import os
 import uuid
+from typing import Dict
 import requests
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -35,21 +36,21 @@ class GenerationRequest(BaseModel):
         description="Text prompt for video generation",
         min_length=1,
         max_length=1000,
-        example="A robot painting a masterpiece, cinematic style",
+        examples=["A robot painting a masterpiece, cinematic style"],
     )
 
 
 class JobResponse(BaseModel):
     """Response model for job submission."""
 
-    message: str = Field(..., example="Job submitted successfully.")
-    job_id: str = Field(..., example="123e4567-e89b-12d3-a456-426614174000")
+    message: str = Field(..., examples=["Job submitted successfully."])
+    job_id: str = Field(..., examples=["123e4567-e89b-12d3-a456-426614174000"])
 
 
 class JobStatus(BaseModel):
     """Response model for job status."""
 
-    status: str = Field(..., example="processing")
+    status: str = Field(..., examples=["processing"])
 
 
 # Ensure the directory for storing videos exists
@@ -57,7 +58,7 @@ os.makedirs(VIDEO_STORAGE_PATH, exist_ok=True)
 
 
 # --- Helper Function to call Inference Service ---
-def call_inference_service(prompt: str, job_id: str):
+def call_inference_service(prompt: str, job_id: str) -> None:
     """
     Sends a request to the KServe/BentoML service to start video generation.
     This is a blocking call that will run in a background task.
@@ -81,7 +82,7 @@ def call_inference_service(prompt: str, job_id: str):
 
 # --- API Endpoints ---
 @app.post("/generate-video/", response_model=JobResponse, status_code=202)
-async def submit_generation_job(request: GenerationRequest, background_tasks: BackgroundTasks):
+async def submit_generation_job(request: GenerationRequest, background_tasks: BackgroundTasks) -> JobResponse:
     """
     Accepts a prompt, generates a unique job ID, and starts the video
     generation process in the background.
@@ -95,7 +96,7 @@ async def submit_generation_job(request: GenerationRequest, background_tasks: Ba
 
 
 @app.get("/status/{job_id}", response_model=JobStatus)
-async def get_job_status(job_id: str):
+async def get_job_status(job_id: str) -> JobStatus:
     """
     Checks if the video file for a given job ID has been created.
     Returns the current status of the generation job.
@@ -111,7 +112,7 @@ async def get_job_status(job_id: str):
 
 
 @app.get("/download/{job_id}")
-async def download_video(job_id: str):
+async def download_video(job_id: str) -> FileResponse:
     """
     Serves the generated video file for download if it exists.
     """
@@ -124,13 +125,13 @@ async def download_video(job_id: str):
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> Dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy", "service": "fastapi-gateway", "version": "0.1.0"}
 
 
 @app.get("/")
-async def read_root():
+async def read_root() -> Dict[str, str]:
     """Root endpoint with API information."""
     return {
         "message": "Welcome to the Text-to-Video API Gateway",

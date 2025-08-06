@@ -1,11 +1,14 @@
 """Improved BentoML service combining both implementations' best practices."""
 
 import os
-import torch
 import bentoml
 from pathlib import Path
-from diffusers import StableDiffusionXLPipeline, StableVideoDiffusionPipeline
-from diffusers.utils import export_to_video
+
+# Lazy imports to avoid dependency issues during build
+with bentoml.importing():
+    import torch
+    from diffusers import StableDiffusionXLPipeline, StableVideoDiffusionPipeline
+    from diffusers.utils import export_to_video
 
 
 # Configuration - The path where the PersistentVolume is mounted

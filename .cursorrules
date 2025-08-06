@@ -11,7 +11,7 @@
 ## Technology Stack Requirements
 - Always use CUDA 12.8 for GPU acceleration and NVIDIA container base images
 - Always use Python 3.12 as the standard Python version across all services
-- Always use PyTorch 2.8 for deep learning frameworks and model implementations
+- Always use PyTorch with CUDA 12.8 support (cu128 wheels) for deep learning frameworks and model implementations
 - Ensure all Docker images, virtual environments, and dependencies are compatible with these versions
 
 ## Project Configuration Standards

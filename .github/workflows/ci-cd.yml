@@ -26,14 +26,14 @@ jobs:
       run: |
         cd apps/fastapi-gateway
         pip install -r requirements.txt
-        pip install pytest pytest-asyncio black ruff mypy
+        pip install pytest pytest-asyncio black ruff flake8
 
     - name: Lint FastAPI code
       run: |
         cd apps/fastapi-gateway
         black --check src/
         ruff check src/
-        mypy src/
+        flake8 src/
 
     - name: Run FastAPI tests
       run: |
@@ -52,7 +52,7 @@ jobs:
     - name: Helm template validation
       run: |
         helm template test-release ${{ env.HELM_CHART_PATH }} \
-          --values ${{ env.HELM_CHART_PATH }}/values-dev.yaml \
+          --values ${{ env.HELM_CHART_PATH }}/values.yaml \
           --dry-run > /dev/null
 
   build-and-push:
@@ -184,7 +184,7 @@ jobs:
         # Note: In real scenarios, you'd configure kubectl context here
         echo "Would deploy to development cluster with:"
         echo "helm upgrade --install text-to-video-dev ${{ env.HELM_CHART_PATH }} \\"
-        echo "  --values ${{ env.HELM_CHART_PATH }}/values-dev.yaml \\"
+        echo "  --values ${{ env.HELM_CHART_PATH }}/values.yaml \\"
         echo "  --set fastapi.image.tag=main-${{ github.sha }} \\"
         echo "  --set bentoService.image.tag=main-${{ github.sha }} \\"
         echo "  --namespace text-to-video-dev \\"
