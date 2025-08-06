@@ -72,27 +72,29 @@ jobs:
 
     - name: Containerize Bento
       working-directory: ./apps/bento-service
+      env:
+        DOCKER_TAGS: ${{ steps.meta.outputs.tags }}
       run: |
         # Create a temporary tag for building
         TEMP_TAG="temp-bento:latest"
         bentoml containerize ${{ steps.bento-tag.outputs.bento_tag }} -t $TEMP_TAG
         
-        # Re-tag with proper registry tags
-        TAGS="${{ steps.meta.outputs.tags }}"
-        echo "Raw tags: $TAGS"
-        echo "$TAGS" | while IFS= read -r tag; do
-          if [ ! -z "$tag" ]; then
+        # Re-tag with proper registry tags from environment variable
+        echo "Raw tags from env: $DOCKER_TAGS"
+        printf '%s\n' "$DOCKER_TAGS" | while IFS= read -r tag; do
+          if [ -n "$tag" ]; then
             echo "Tagging: $TEMP_TAG -> $tag"
             docker tag "$TEMP_TAG" "$tag"
           fi
         done
 
     - name: Push Docker images
+      env:
+        DOCKER_TAGS: ${{ steps.meta.outputs.tags }}
       run: |
-        TAGS="${{ steps.meta.outputs.tags }}"
-        echo "Raw tags: $TAGS"
-        echo "$TAGS" | while IFS= read -r tag; do
-          if [ ! -z "$tag" ]; then
+        echo "Raw tags from env: $DOCKER_TAGS"
+        printf '%s\n' "$DOCKER_TAGS" | while IFS= read -r tag; do
+          if [ -n "$tag" ]; then
             echo "Pushing: $tag"
             docker push "$tag"
           fi
