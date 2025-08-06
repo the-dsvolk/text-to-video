@@ -9,7 +9,7 @@
 - Prefer Hugging Face transformers and diffusers libraries for AI model implementations
 
 ## Technology Stack Requirements
-- Always use CUDA 12.8 for GPU acceleration with NVIDIA CUDA base images (nvidia/cuda:12.8-devel-ubuntu22.04)
+- Always use CUDA 12.8 for GPU acceleration with NVIDIA CUDA base images (nvidia/cuda:12.8.0-devel-ubuntu22.04)
 - Always use Python 3.12 as the standard Python version across all services
 - Install PyTorch with CUDA 12.8 support using: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 - Prefer smaller CUDA base images over large pre-built PyTorch containers for better build times and image sizes
