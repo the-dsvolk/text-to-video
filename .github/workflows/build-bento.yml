@@ -78,16 +78,20 @@ jobs:
         bentoml containerize ${{ steps.bento-tag.outputs.bento_tag }} -t $TEMP_TAG
         
         # Re-tag with proper registry tags
-        echo "${{ steps.meta.outputs.tags }}" | while read tag; do
+        IFS=$'\n'
+        for tag in ${{ steps.meta.outputs.tags }}; do
           if [ ! -z "$tag" ]; then
+            echo "Tagging: $TEMP_TAG -> $tag"
             docker tag "$TEMP_TAG" "$tag"
           fi
         done
 
     - name: Push Docker images
       run: |
-        echo "${{ steps.meta.outputs.tags }}" | while read tag; do
+        IFS=$'\n'
+        for tag in ${{ steps.meta.outputs.tags }}; do
           if [ ! -z "$tag" ]; then
+            echo "Pushing: $tag"
             docker push "$tag"
           fi
         done
