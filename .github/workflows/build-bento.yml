@@ -80,7 +80,7 @@ jobs:
         # Re-tag with proper registry tags
         echo "${{ steps.meta.outputs.tags }}" | while read tag; do
           if [ ! -z "$tag" ]; then
-            docker tag $TEMP_TAG $tag
+            docker tag "$TEMP_TAG" "$tag"
           fi
         done
 
@@ -88,7 +88,7 @@ jobs:
       run: |
         echo "${{ steps.meta.outputs.tags }}" | while read tag; do
           if [ ! -z "$tag" ]; then
-            docker push $tag
+            docker push "$tag"
           fi
         done
 
