@@ -16,18 +16,18 @@ VIDEO_STORAGE_PATH = os.getenv("SHARED_VOLUME_PATH", "/data/videos")
     traffic={"timeout": 900},  # 15-minute timeout for long generation jobs
 )
 class TextToVideoGenerator:
-    """Improved Text-to-Video generation service using SDXL + SVD pipeline."""
+    """Memory-optimized Text-to-Video generation service using Tiny-SD + SVD pipeline."""
 
     def __init__(self) -> None:
         """Load all models into memory when the service first starts."""
         # Import dependencies at runtime
         import torch
-        from diffusers import StableDiffusionXLPipeline, StableVideoDiffusionPipeline
+        from diffusers import StableDiffusionPipeline, StableVideoDiffusionPipeline
         from diffusers.utils import export_to_video
         
         # Store imports as instance variables for use in other methods
         self.torch = torch
-        self.StableDiffusionXLPipeline = StableDiffusionXLPipeline
+        self.StableDiffusionPipeline = StableDiffusionPipeline
         self.StableVideoDiffusionPipeline = StableVideoDiffusionPipeline
         self.export_to_video = export_to_video
         
@@ -39,25 +39,24 @@ class TextToVideoGenerator:
         # Use float16 for memory efficiency
         self.dtype = torch.float16 if self.device == "cuda" else torch.float32
 
-        # Load Text-to-Image Model (SDXL)
-        print("Loading Stable Diffusion XL model...")
-        self.sdxl_pipe = StableDiffusionXLPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-xl-base-1.0",
+        # Load Text-to-Image Model (Tiny-SD - 55% smaller, much less memory)
+        print("Loading Tiny-SD model (memory optimized)...")
+        self.sd_pipe = self.StableDiffusionPipeline.from_pretrained(
+            "segmind/tiny-sd",
             torch_dtype=self.dtype,
-            variant="fp16" if self.device == "cuda" else None,
             use_safetensors=True,
         )
-        self.sdxl_pipe.to(self.device)
+        self.sd_pipe.to(self.device)
 
         # Enable memory efficient attention if available (safety check)
-        if hasattr(self.sdxl_pipe, "enable_xformers_memory_efficient_attention"):
+        if hasattr(self.sd_pipe, "enable_xformers_memory_efficient_attention"):
             try:
-                self.sdxl_pipe.enable_xformers_memory_efficient_attention()
-                print("XFormers memory efficient attention enabled for SDXL")
+                self.sd_pipe.enable_xformers_memory_efficient_attention()
+                print("XFormers memory efficient attention enabled for Tiny-SD")
             except Exception as e:
                 print(f"Could not enable XFormers: {e}")
 
-        print("SDXL model loaded successfully.")
+        print("Tiny-SD model loaded successfully.")
 
         # Load Image-to-Video Model (SVD)
         print("Loading Stable Video Diffusion model...")
@@ -85,23 +84,23 @@ class TextToVideoGenerator:
         print(f"[{job_id}] Starting generation for prompt: '{prompt}'")
 
         try:
-            # Step 1: Generate keyframe with SDXL
+            # Step 1: Generate keyframe with Tiny-SD (memory optimized)
             print(f"[{job_id}] Generating keyframe image...")
-            image = self.sdxl_pipe(
+            image = self.sd_pipe(
                 prompt=prompt,
-                num_inference_steps=25,
-                height=576,
-                width=1024,
+                num_inference_steps=20,  # Reduced for faster generation
+                height=512,              # Standard SD resolution (not XL)
+                width=512,               # Standard SD resolution (not XL)
                 guidance_scale=7.5,
             ).images[0]
             print(f"[{job_id}] Keyframe generated.")
 
-            # Step 2: Animate with SVD
+            # Step 2: Animate with SVD (reduced settings for memory)
             print(f"[{job_id}] Animating image with SVD...")
             video_frames = self.svd_pipe(
                 image,
-                num_frames=25,
-                decode_chunk_size=8,  # Memory optimization
+                num_frames=14,           # Reduced from 25 to save memory
+                decode_chunk_size=4,     # Reduced from 8 to save memory  
             ).frames[0]
             print(f"[{job_id}] Animation complete.")
 
