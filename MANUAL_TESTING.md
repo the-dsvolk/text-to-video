@@ -69,27 +69,6 @@ Expected response:
 }
 ```
 
-## Memory Optimization Commands ✅ WORKING
-
-If you encounter CUDA out of memory errors, try these optimized container settings:
-
-```bash
-# Stop and remove current container
-docker stop bento-video-service
-docker rm bento-video-service
-
-# Run with memory-optimized settings (latest code uses smaller Tiny-SD model)
-docker run -d \
-  --name bento-video-service \
-  --gpus all \
-  -p 3000:3000 \
-  -v ~/video-test/videos:/data/videos \
-  -v ~/video-test/cache:/home/bentoml/.cache \
-  -e SHARED_VOLUME_PATH="/data/videos" \
-  -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
-  -e CUDA_LAUNCH_BLOCKING=1 \
-  ghcr.io/the-dsvolk/bento-video-service:latest
-```
 
 ## Sample Generation Test ✅ WORKING
 
