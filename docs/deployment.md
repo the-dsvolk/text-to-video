@@ -47,23 +47,23 @@ kubectl describe node <gpu-node-name>
 ```bash
 # Images are automatically built via GitHub Actions
 # Latest images:
-# - ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway:latest
-# - ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
+# - ghcr.io/the-dsvolk/fastapi-video-gateway:latest
+# - ghcr.io/the-dsvolk/bento-video-service:latest
 ```
 
 #### Option B: Build Images Locally
 ```bash
 # Build FastAPI Gateway
 cd apps/fastapi-gateway
-docker build -t ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway:latest .
-docker push ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway:latest
+docker build -t ghcr.io/the-dsvolk/fastapi-video-gateway:latest .
+docker push ghcr.io/the-dsvolk/fastapi-video-gateway:latest
 
 # Build BentoML Service
 cd apps/bento-service
 bentoml build
 BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
-bentoml containerize $BENTO_TAG -t ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
-docker push ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
+bentoml containerize $BENTO_TAG -t ghcr.io/the-dsvolk/bento-video-service:latest
+docker push ghcr.io/the-dsvolk/bento-video-service:latest
 ```
 
 ### 3. Helm Deployment

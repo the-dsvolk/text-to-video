@@ -14,13 +14,13 @@ keywords:
   - bentoml
   - kserve
 
-home: https://github.com/the-dmitry-s-volkov/text-to-video
+home: https://github.com/the-dsvolk/text-to-video
 sources:
-  - https://github.com/the-dmitry-s-volkov/text-to-video
+  - https://github.com/the-dsvolk/text-to-video
 
 maintainers:
   - name:  Dmitry Volkov
-    email: the.dmitry.s.volkov@gmail.com
+    email: the.dsvolk@icloud.com
 
 
 
