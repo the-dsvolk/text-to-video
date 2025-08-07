@@ -10,7 +10,7 @@ This guide contains only verified working commands for testing the BentoML servi
 
 ```bash
 # Pull the latest BentoML service image
-docker pull ghcr.io/the-dmitry-volkov/bento-video-service:latest
+docker pull ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
 ```
 
 ## 2. Create Local Directories ✅ WORKING
@@ -43,7 +43,7 @@ docker run -d \
   -e SHARED_VOLUME_PATH="/data/videos" \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
   -e CUDA_LAUNCH_BLOCKING=1 \
-  ghcr.io/the-dmitry-volkov/bento-video-service:latest
+  ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
 ```
 
 ## 4. Check Service Health ✅ WORKING
@@ -60,7 +60,7 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "service": "text-to-video-generator", 
+  "service": "text-to-video-generator",
   "device": "cuda",
   "cuda_available": true,
   "gpu_name": "Tesla T4",
@@ -88,7 +88,7 @@ docker run -d \
   -e SHARED_VOLUME_PATH="/data/videos" \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
   -e CUDA_LAUNCH_BLOCKING=1 \
-  ghcr.io/the-dmitry-volkov/bento-video-service:latest
+  ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
 ```
 
 ## Sample Generation Test ✅ WORKING
@@ -107,7 +107,7 @@ curl -X POST http://localhost:3000/generate \
 ```
 
 
-## Manual execution from Dcoker 
+## Manual execution from Dcoker
 
 Update the code:
 ```bash
@@ -142,7 +142,7 @@ else:
 ## Notes
 
 - Latest code uses Tiny-SD model (2.8GB) instead of SDXL (6GB+) for 55% memory reduction
-- Generates 512x512 images instead of 1024x576 for memory efficiency  
+- Generates 512x512 images instead of 1024x576 for memory efficiency
 - Reduced inference steps and video frames for Tesla T4 compatibility
 - The service needs ~8GB GPU memory instead of ~13GB with optimizations
 - Tesla T4 with 14.6GB total memory should now work without memory errors

@@ -7,7 +7,7 @@ name = "bento-video-service"
 version = "0.1.0"
 description = "BentoML Text-to-Video Generation Service using Stable Diffusion XL and Stable Video Diffusion"
 authors = [
-    {name = "Dmitry Volkov", email = "the.dmitry.s.volkov@gmail.com"},
+    {name = "Dmitry Volkov", email = "the.dsvolk@icloud.com"},
 ]
 dependencies = [
     "bentoml>=1.1.11",

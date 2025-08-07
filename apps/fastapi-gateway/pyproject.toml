@@ -7,7 +7,7 @@ name = "fastapi-video-gateway"
 version = "0.1.0"
 description = "FastAPI Gateway for Text-to-Video Generation Service"
 authors = [
-    {name = "Dmitry Volkov", email = "the.dmitry.s.volkov@gmail.com"},
+    {name = "Dmitry Volkov", email = "the.dsvolk@icloud.com"},
 ]
 dependencies = [
     "fastapi>=0.104.0",

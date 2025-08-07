@@ -87,7 +87,8 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/fastapi-video-gateway
         tags: |
-          type=sha,prefix={{branch}}-
+          type=sha,prefix={{branch}}-,enable={{is_default_branch}}
+          type=sha,prefix=pr-,enable=${{ github.event_name == 'pull_request' }}
           type=raw,value=latest
 
     - name: Build and push FastAPI image
@@ -116,7 +117,8 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service
         tags: |
-          type=sha,prefix={{branch}}-
+          type=sha,prefix={{branch}}-,enable={{is_default_branch}}
+          type=sha,prefix=pr-,enable=${{ github.event_name == 'pull_request' }}
           type=raw,value=latest
 
     - name: Build and push Bento image
