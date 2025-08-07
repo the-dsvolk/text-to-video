@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 REGISTRY="${REGISTRY:-ghcr.io}"
-REPO_OWNER="${GITHUB_REPOSITORY_OWNER:-the-dmitry-volkov}"
+REPO_OWNER="${GITHUB_REPOSITORY_OWNER:-the-dmitry-s-volkov}"
 TAG="${TAG:-latest}"
 PLATFORM="${PLATFORM:-linux/amd64,linux/arm64}"
 
@@ -188,7 +188,7 @@ main() {
             echo ""
             echo "Environment variables:"
             echo "  REGISTRY             Container registry (default: ghcr.io)"
-            echo "  REPO_OWNER          Repository owner (default: the-dmitry-volkov)"
+            echo "  REPO_OWNER          Repository owner (default: the-dmitry-s-volkov)"
             echo "  TAG                 Image tag (default: latest)"
             echo "  PLATFORM            Build platform (default: linux/amd64,linux/arm64)"
             echo "  BENTO_BUILD_METHOD  BentoML build method: 'bentoml' or 'docker' (default: bentoml)"

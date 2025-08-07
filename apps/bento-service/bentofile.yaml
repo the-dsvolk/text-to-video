@@ -1,6 +1,6 @@
 service: "src.service:TextToVideoGenerator"
 labels:
-  owner: the-dmitry-volkov
+  owner: the-dmitry-s-volkov
   project: text-to-video-generation
 description: "Text-to-Video generation service using Stable Diffusion XL and Stable Video Diffusion"
 

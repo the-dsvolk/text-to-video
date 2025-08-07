@@ -47,23 +47,23 @@ kubectl describe node <gpu-node-name>
 ```bash
 # Images are automatically built via GitHub Actions
 # Latest images:
-# - ghcr.io/the-dmitry-volkov/fastapi-video-gateway:latest
-# - ghcr.io/the-dmitry-volkov/bento-video-service:latest
+# - ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway:latest
+# - ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
 ```
 
 #### Option B: Build Images Locally
 ```bash
 # Build FastAPI Gateway
 cd apps/fastapi-gateway
-docker build -t ghcr.io/the-dmitry-volkov/fastapi-video-gateway:latest .
-docker push ghcr.io/the-dmitry-volkov/fastapi-video-gateway:latest
+docker build -t ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway:latest .
+docker push ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway:latest
 
 # Build BentoML Service
 cd apps/bento-service
 bentoml build
 BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
-bentoml containerize $BENTO_TAG -t ghcr.io/the-dmitry-volkov/bento-video-service:latest
-docker push ghcr.io/the-dmitry-volkov/bento-video-service:latest
+bentoml containerize $BENTO_TAG -t ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
+docker push ghcr.io/the-dmitry-s-volkov/bento-video-service:latest
 ```
 
 ### 3. Helm Deployment
@@ -122,7 +122,7 @@ helm upgrade --install text-to-video helm/text-to-video \
 fastapi:
   replicaCount: 2
   image:
-    repository: ghcr.io/the-dmitry-volkov/fastapi-video-gateway
+    repository: ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway
     tag: "latest"
   resources:
     limits:
@@ -138,7 +138,7 @@ fastapi:
 ```yaml
 bentoService:
   image:
-    repository: ghcr.io/the-dmitry-volkov/bento-video-service
+    repository: ghcr.io/the-dmitry-s-volkov/bento-video-service
     tag: "latest"
   resources:
     limits:
