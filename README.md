@@ -2,9 +2,7 @@
 
 This project provides all the necessary code and configuration to deploy a scalable text-to-video generation service on Kubernetes using FastAPI, BentoML, and KServe.
 
-[![Text-to-Video Generation Example](resources/sunset.png)](resources/sunset.mp4)
-
-*Click the image above to download and view the generated video*
+![Text-to-Video Generation Example](resources/sunset.png)
 
 **Example prompt**: "A beautiful sunset over calm ocean waves"
 **Output**: 14-frame video (2 seconds at 7fps, 512x512 resolution)

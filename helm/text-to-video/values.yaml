@@ -13,18 +13,18 @@ namespace:
 fastapi:
   enabled: true
   replicaCount: 2
-  
+
   image:
     repository: ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway
     tag: "latest"
     pullPolicy: IfNotPresent
-  
+
   service:
     type: LoadBalancer
     port: 80
     targetPort: 8000
     annotations: {}
-  
+
   ingress:
     enabled: false
     className: ""
@@ -35,7 +35,7 @@ fastapi:
           - path: /
             pathType: Prefix
     tls: []
-  
+
   resources:
     limits:
       cpu: 500m
@@ -43,13 +43,13 @@ fastapi:
     requests:
       cpu: 250m
       memory: 256Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
     maxReplicas: 10
     targetCPUUtilizationPercentage: 80
-  
+
   env:
     SHARED_VOLUME_PATH: "/data/videos"
     KSERVE_URL: "http://text-to-video-generator.text-to-video-app.svc.cluster.local/v1/models/text-to-video-generator:predict"
@@ -57,12 +57,12 @@ fastapi:
 # BentoML service configuration (via KServe)
 bentoService:
   enabled: true
-  
+
   image:
     repository: ghcr.io/the-dmitry-s-volkov/bento-video-service
     tag: "latest"
     pullPolicy: IfNotPresent
-  
+
   resources:
     limits:
       nvidia.com/gpu: 1
@@ -72,7 +72,7 @@ bentoService:
       nvidia.com/gpu: 1
       memory: 8Gi
       cpu: 2
-  
+
   autoscaling:
     enabled: true
     minReplicas: 0  # Scale to zero when not in use
@@ -80,7 +80,7 @@ bentoService:
     scaleToZero:
       enabled: true
       timeoutSeconds: 300
-  
+
   env:
     SHARED_VOLUME_PATH: "/shared/videos"
     HF_HOME: "/tmp/huggingface"
@@ -90,14 +90,14 @@ bentoService:
 # Storage configuration
 storage:
   enabled: true
-  
+
   # Persistent Volume Claim
   pvc:
     name: shared-videos-pvc
     accessMode: ReadWriteMany
     size: 100Gi
     storageClass: ""  # Use default storage class
-  
+
   # Optional: Define a specific Persistent Volume
   pv:
     enabled: false

@@ -60,7 +60,7 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "service": "text-to-video-generator", 
+  "service": "text-to-video-generator",
   "device": "cuda",
   "cuda_available": true,
   "gpu_name": "Tesla T4",
@@ -107,7 +107,7 @@ curl -X POST http://localhost:3000/generate \
 ```
 
 
-## Manual execution from Dcoker 
+## Manual execution from Dcoker
 
 Update the code:
 ```bash
@@ -142,7 +142,7 @@ else:
 ## Notes
 
 - Latest code uses Tiny-SD model (2.8GB) instead of SDXL (6GB+) for 55% memory reduction
-- Generates 512x512 images instead of 1024x576 for memory efficiency  
+- Generates 512x512 images instead of 1024x576 for memory efficiency
 - Reduced inference steps and video frames for Tesla T4 compatibility
 - The service needs ~8GB GPU memory instead of ~13GB with optimizations
 - Tesla T4 with 14.6GB total memory should now work without memory errors

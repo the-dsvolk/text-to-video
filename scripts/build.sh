@@ -41,45 +41,45 @@ log_error() {
 
 check_dependencies() {
     log_info "Checking dependencies..."
-    
+
     if ! command -v docker &> /dev/null; then
         log_error "Docker is not installed or not in PATH"
         exit 1
     fi
-    
+
     if ! command -v bentoml &> /dev/null; then
         log_warn "BentoML is not installed. Installing..."
         pip install bentoml==1.1.11
     fi
-    
+
     if ! docker buildx version &> /dev/null; then
         log_error "Docker Buildx is not available"
         exit 1
     fi
-    
+
     log_success "All dependencies are available"
 }
 
 build_fastapi() {
     log_info "Building FastAPI Gateway image..."
-    
+
     cd apps/fastapi-gateway
-    
+
     docker buildx build \
         --platform "$PLATFORM" \
         --tag "${FASTAPI_IMAGE}:${TAG}" \
         --push \
         .
-    
+
     cd ../..
     log_success "FastAPI Gateway image built: ${FASTAPI_IMAGE}:${TAG}"
 }
 
 build_bento() {
     log_info "Building BentoML Service..."
-    
+
     cd apps/bento-service
-    
+
     # Choose build method
     if [[ "${BENTO_BUILD_METHOD:-bentoml}" == "docker" ]]; then
         log_info "Using direct Docker build method..."
@@ -90,20 +90,20 @@ build_bento() {
             .
     else
         log_info "Using BentoML containerize method..."
-        
+
         # Build Bento
         log_info "Building Bento package..."
         bentoml build
-        
+
         # Get the latest Bento tag
         BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
         log_info "Built Bento: $BENTO_TAG"
-        
+
         # Containerize Bento
         log_info "Containerizing Bento..."
         TEMP_TAG="temp-bento:latest"
         bentoml containerize "$BENTO_TAG" -t "$TEMP_TAG"
-        
+
         # Multi-platform build (if supported)
         if [[ "$PLATFORM" == *","* ]]; then
             log_warn "Multi-platform build for BentoML requires manual setup"
@@ -115,7 +115,7 @@ build_bento() {
             docker push "${BENTO_IMAGE}:${TAG}"
         fi
     fi
-    
+
     cd ../..
     log_success "BentoML Service image built: ${BENTO_IMAGE}:${TAG}"
 }
@@ -126,9 +126,9 @@ build_all() {
     log_info "Repository Owner: $REPO_OWNER"
     log_info "Tag: $TAG"
     log_info "Platform: $PLATFORM"
-    
+
     check_dependencies
-    
+
     # Check if we should build specific components
     if [[ "${1:-all}" == "fastapi" ]]; then
         build_fastapi
@@ -138,7 +138,7 @@ build_all() {
         build_fastapi
         build_bento
     fi
-    
+
     log_success "Build completed successfully!"
     log_info "Images built:"
     log_info "  - ${FASTAPI_IMAGE}:${TAG}"
