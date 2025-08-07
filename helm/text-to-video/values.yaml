@@ -15,7 +15,7 @@ fastapi:
   replicaCount: 2
 
   image:
-    repository: ghcr.io/the-dmitry-s-volkov/fastapi-video-gateway
+    repository: ghcr.io/the-dsvolk/fastapi-video-gateway
     tag: "latest"
     pullPolicy: IfNotPresent
 
@@ -59,7 +59,7 @@ bentoService:
   enabled: true
 
   image:
-    repository: ghcr.io/the-dmitry-s-volkov/bento-video-service
+    repository: ghcr.io/the-dsvolk/bento-video-service
     tag: "latest"
     pullPolicy: IfNotPresent
 
