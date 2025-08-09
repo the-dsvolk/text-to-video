@@ -16,9 +16,8 @@ exclude:
 - "*.pyd"
 - ".DS_Store"
 
-python:
-  # NO packages listed = NO virtual environment created
-  # All packages installed via setup_script instead
+# NO python: section = NO virtual environment created
+# All packages installed via setup_script instead
 
 docker:
   base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
