@@ -13,6 +13,8 @@ This guide contains verified working commands for testing the BentoML service wi
 ```bash
 # Pull the latest BentoML service image
 docker pull ghcr.io/the-dsvolk/bento-video-service:latest
+# or
+sudo nerdctl pull ghcr.io/the-dsvolk/bento-video-service:mochi-1
 ```
 
 ## 2. Create Local Directories ✅ WORKING
@@ -67,6 +69,27 @@ docker run -d \
   --shm-size=4g \
   ghcr.io/the-dsvolk/bento-video-service:latest
 ```
+
+### Option C: netrdctl
+```bash
+ sudo nerdctl run -d \
+  --name bento-video-service \
+  --network host \
+  --gpus all \
+  -v ~/video-test/videos:/data/videos \
+  -v ~/video-test/cache:/home/bentoml/.cache \
+  -e SHARED_VOLUME_PATH="/data/videos" \
+  -e CUDA_VISIBLE_DEVICES="0,1" \
+  -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+  -e CUDA_LAUNCH_BLOCKING=1 \
+  --shm-size=4g \
+  ghcr.io/the-dsvolk/bento-video-service:mochi-1
+fc4199a4e1034f2055498d85e49c8bad69fa2e03415039208d4c66da5a982ca2
+ubuntu@g471:~$ sudo nerdctl ps
+CONTAINER ID    IMAGE                                             COMMAND                   CREATED           STATUS    PORTS    NAMES
+fc4199
+
+````
 
 ## 4. Check Service Health ✅ WORKING
 
