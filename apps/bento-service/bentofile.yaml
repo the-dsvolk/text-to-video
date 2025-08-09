@@ -18,30 +18,31 @@ exclude:
 
 python:
   packages:
-    - torch>=2.0.0
-    - torchvision>=0.15.0
-    - torchaudio>=2.0.0
-    # Install latest diffusers with Mochi-1 support
-    - git+https://github.com/huggingface/diffusers.git
-    - transformers>=4.44.0
+    # Core ML dependencies with pinned versions (based on NVIDIA production setup)
+    - transformers==4.46.3
     - accelerate>=0.30.0
-    - xformers>=0.0.25
-    - Pillow>=10.0.0
+    - bitsandbytes
+    - peft
+    - pillow
+    - tensorboard
+    # Core libraries
     - safetensors>=0.4.0
     - huggingface-hub>=0.20.0
     - numpy>=1.24.0
     - "imageio[ffmpeg]>=2.25.0"
-  extra_index_url: https://download.pytorch.org/whl/cu128
+    # Latest diffusers for Mochi-1 support
+    - git+https://github.com/huggingface/diffusers.git
 
 docker:
-  python_version: "3.12"
+  base_image: "nvcr.io/nvidia/pytorch:25.01-py3"
   system_packages:
     - git
     - wget
     - curl
-    - build-essential
-    - python3-dev
-    - python3-pip
-    - ffmpeg
     - vim
-    - less
+    - htop
+    - nvtop
+    - python3-dev
+    - pciutils
+    - sysstat
+    - ffmpeg

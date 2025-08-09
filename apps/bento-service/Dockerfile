@@ -1,39 +1,25 @@
 # Multi-stage build for BentoML Text-to-Video Service
 # This is an alternative to using bentoml containerize
 
-FROM nvidia/cuda:12.8.0-devel-ubuntu22.04 as base
+FROM nvcr.io/nvidia/pytorch:25.01-py3 as base
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    curl \
-    wget \
-    git \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y \
-    python3.12 \
-    python3.12-dev \
-    python3.12-distutils \
-    python3-pip \
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get -y --no-install-recommends install \
+    vim htop nvtop python3-dev python3-pip git pciutils sysstat \
+    curl wget ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3.12 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
-    && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1
-
-# Install pip for Python 3.12
-RUN curl https://bootstrap.pypa.io/get-pip.py | python3.12
-
-# Upgrade pip and install BentoML
-RUN python3.12 -m pip install --upgrade pip \
-    && python3.12 -m pip install bentoml==1.1.11
+# Install BentoML (PyTorch already optimized in base image)
+RUN pip3 install --no-cache-dir bentoml>=1.1.11
 
 # Set working directory
 WORKDIR /workspace
 
 # Copy requirements first for better caching
 COPY requirements.txt .
-RUN python3.12 -m pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY src/ ./src/
