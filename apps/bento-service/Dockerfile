@@ -1,7 +1,7 @@
 # Multi-stage build for BentoML Text-to-Video Service
 # This is an alternative to using bentoml containerize
 
-FROM python:3.11-slim as base
+FROM pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime as base
 
 # Install system dependencies (Python 3.11 already available in base image)
 RUN apt-get update && apt-get install -y \

@@ -33,11 +33,13 @@ python:
     - torch>=2.4.1
     - torchvision>=0.19.1
     - transformers>=4.45.2
+    - git+https://github.com/genmoai/mochi.git
   extra_index_url: https://download.pytorch.org/whl/cu128
   index_url: https://pypi.org/simple
   lock_packages: false
 
 docker:
+  base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
   python_version: "3.11"
   system_packages:
     - git
