@@ -34,7 +34,7 @@ python:
     - git+https://github.com/huggingface/diffusers.git
 
 docker:
-  base_image: "nvcr.io/nvidia/pytorch:25.01-py3"
+  base_image: "nvidia/cuda:12.8.0-devel-ubuntu22.04"
   system_packages:
     - git
     - wget
@@ -42,6 +42,8 @@ docker:
     - vim
     - htop
     - nvtop
+    - python3
+    - python3-pip
     - python3-dev
     - pciutils
     - sysstat
