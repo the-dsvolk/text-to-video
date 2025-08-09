@@ -7,6 +7,7 @@ description: "Text-to-Video generation service using Stable Diffusion XL and Sta
 include:
 - "src/"
 - "requirements.txt"
+- "install_genmo.sh"
 
 exclude:
 - "__pycache__/"
@@ -43,11 +44,7 @@ docker:
   env:
     UV_INDEX_STRATEGY: "unsafe-best-match"
     UV_EXTRA_INDEX_URL: "https://download.pytorch.org/whl/cu128"
-  setup_script: |
-    #!/bin/bash
-    echo "Installing Genmo Mochi package with correct index strategy..."
-    uv pip install --index-strategy unsafe-best-match --extra-index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cu128 git+https://github.com/genmoai/mochi.git
-    echo "Genmo Mochi package installed successfully!"
+  setup_script: "install_genmo.sh"
   system_packages:
     - git
     - wget
