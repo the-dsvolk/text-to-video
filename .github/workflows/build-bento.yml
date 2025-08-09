@@ -68,7 +68,7 @@ jobs:
       id: bento-tag
       working-directory: ./apps/bento-service
       run: |
-        BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
+        BENTO_TAG=$(bentoml list text_to_video_generator_mochi -o json | jq -r '.[0].tag')
         echo "bento_tag=$BENTO_TAG" >> $GITHUB_OUTPUT
 
     - name: Containerize Bento
