@@ -65,15 +65,15 @@ jobs:
       run: |
         bentoml build
         BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
-        
+
         # Build container
         TEMP_TAG="temp-bento:latest"
         bentoml containerize $BENTO_TAG -t $TEMP_TAG
-        
+
         # Tag and push
         docker tag $TEMP_TAG ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:${{ steps.version.outputs.version }}
         docker tag $TEMP_TAG ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:latest
-        
+
         docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:${{ steps.version.outputs.version }}
         docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:latest
 
@@ -98,16 +98,16 @@ jobs:
         release_name: Release ${{ steps.version.outputs.version }}
         body: |
           ## Changes in this release
-          
+
           ### Container Images
           - `${{ env.REGISTRY }}/${{ github.repository_owner }}/fastapi-video-gateway:${{ steps.version.outputs.version }}`
           - `${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:${{ steps.version.outputs.version }}`
-          
+
           ### Helm Chart
           ```bash
           helm install text-to-video oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm/text-to-video --version ${{ steps.version.outputs.version }}
           ```
-          
+
           ### Deployment
           ```bash
           # Update image tags in values.yaml or use --set
@@ -116,18 +116,3 @@ jobs:
             --set bentoService.image.tag=${{ steps.version.outputs.version }}
           ```
         draft: false
-        prerelease: false
-
-    # Security scanning for release images
-    - name: Run Trivy scan on FastAPI image
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/fastapi-video-gateway:${{ steps.version.outputs.version }}
-        format: 'table'
-
-    - name: Run Trivy scan on Bento image
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/bento-video-service:${{ steps.version.outputs.version }}
-        format: 'table'
-      continue-on-error: true  # AI images often have false positives
