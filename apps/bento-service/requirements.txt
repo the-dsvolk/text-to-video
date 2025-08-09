@@ -2,7 +2,7 @@ bentoml>=1.1.11
 torch>=2.0.0,<3.0.0
 torchvision>=0.15.0
 torchaudio>=2.0.0
-diffusers>=0.30.0
+diffusers[torch]>=0.30.0
 transformers>=4.46.3
 accelerate>=0.30.0
 xformers>=0.0.25
@@ -11,4 +11,3 @@ safetensors>=0.4.0
 huggingface-hub>=0.20.0
 numpy>=1.24.0
 imageio[ffmpeg]>=2.25.0
-git+https://github.com/huggingface/diffusers.git
