@@ -37,6 +37,7 @@ python:
   extra_index_url: https://download.pytorch.org/whl/cu128
   index_url: https://pypi.org/simple
   lock_packages: false
+  pip_args: "--index-strategy unsafe-best-match"
 
 docker:
   base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
