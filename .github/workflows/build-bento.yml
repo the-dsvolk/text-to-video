@@ -27,6 +27,26 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Check initial disk space
+      run: |
+        echo "=== Initial Disk Space ==="
+        df -h
+        echo "=== Available space in /: $(df -h / | awk 'NR==2 {print $4}') ==="
+
+    - name: Free up disk space
+      run: |
+        echo "=== Cleaning up disk space ==="
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo apt-get autoremove -y
+        sudo apt-get autoclean -y
+        echo "=== Disk space after cleanup ==="
+        df -h
+        echo "=== Available space in /: $(df -h / | awk 'NR==2 {print $4}') ==="
+
     - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
@@ -59,6 +79,12 @@ jobs:
           type=sha,prefix=pr-,enable=${{ github.event_name == 'pull_request' }}
           type=raw,value=latest,enable={{is_default_branch}}
 
+    - name: Check disk space before build
+      run: |
+        echo "=== Disk Space Before Build ==="
+        df -h
+        echo "=== Available space in /: $(df -h / | awk 'NR==2 {print $4}') ==="
+
     - name: Build Bento
       working-directory: ./apps/bento-service
       run: |
@@ -70,6 +96,12 @@ jobs:
       run: |
         BENTO_TAG=$(bentoml list text_to_video_generator_mochi -o json | jq -r '.[0].tag')
         echo "bento_tag=$BENTO_TAG" >> $GITHUB_OUTPUT
+
+    - name: Check disk space before containerize
+      run: |
+        echo "=== Disk Space Before Containerize ==="
+        df -h
+        echo "=== Available space in /: $(df -h / | awk 'NR==2 {print $4}') ==="
 
     - name: Containerize Bento
       working-directory: ./apps/bento-service
@@ -100,6 +132,12 @@ jobs:
             docker push "$tag"
           fi
         done
+
+    - name: Final disk space check
+      run: |
+        echo "=== Final Disk Space ==="
+        df -h
+        echo "=== Available space in /: $(df -h / | awk 'NR==2 {print $4}') ==="
 
     - name: Image built successfully
       run: |
