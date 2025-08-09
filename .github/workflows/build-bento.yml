@@ -2,12 +2,12 @@ name: Build BentoML Service
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ '*' ]  # Trigger on any branch
     paths:
       - 'apps/bento-service/**'
       - '.github/workflows/build-bento.yml'
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop, mochi-2 ]
     paths:
       - 'apps/bento-service/**'
       - '.github/workflows/build-bento.yml'
@@ -27,10 +27,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: '3.11'
 
     - name: Install BentoML and PyTorch
       run: |
@@ -79,7 +79,7 @@ jobs:
         # Create a temporary tag for building
         TEMP_TAG="temp-bento:latest"
         bentoml containerize ${{ steps.bento-tag.outputs.bento_tag }} -t $TEMP_TAG
-        
+
         # Re-tag with proper registry tags from environment variable
         echo "Raw tags from env: $DOCKER_TAGS"
         printf '%s\n' "$DOCKER_TAGS" | while IFS= read -r tag; do
