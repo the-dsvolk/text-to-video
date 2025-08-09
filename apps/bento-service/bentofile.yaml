@@ -26,10 +26,7 @@ python:
     # Core ML dependencies with pinned versions (based on NVIDIA production setup)
     - transformers==4.46.3
     - accelerate>=0.30.0
-    - bitsandbytes
-    - peft
     - pillow
-    - tensorboard
     # Core libraries
     - safetensors>=0.4.0
     - huggingface-hub>=0.20.0
