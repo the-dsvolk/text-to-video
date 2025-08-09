@@ -1,10 +1,12 @@
-# Manual Testing Guide for BentoML Text-to-Video Service
+# Manual Testing Guide for BentoML Text-to-Video Service (Mochi-1)
 
-This guide contains only verified working commands for testing the BentoML service container on a GPU machine.
+This guide contains verified working commands for testing the BentoML service with Mochi-1 model on a GPU machine.
 
 ## Prerequisites
 - SSH access to GPU machine with NVIDIA drivers and Docker installed
 - Docker with GPU support configured
+- **MINIMUM**: 24GB VRAM GPU (e.g., RTX 4090, A6000, V100 32GB)
+- **RECOMMENDED**: 2× GPUs with 12GB+ VRAM each
 
 ## 1. Pull Container Image ✅ WORKING
 
@@ -23,7 +25,7 @@ mkdir -p ~/video-test/videos ~/video-test/data ~/video-test/cache
 chmod 755 ~/video-test/videos ~/video-test/data ~/video-test/cache
 ```
 
-## 3. Run Container with Memory Optimization ✅ WORKING
+## 3. Run Container with Mochi-1 Optimization ⚠️ UPDATED
 
 # Stop and remove current container
 
@@ -32,8 +34,9 @@ docker stop bento-video-service
 docker rm bento-video-service
 ```
 
+### Option A: Single High-VRAM GPU (24GB+ required)
 ```bash
-# Run container with optimized PyTorch CUDA memory settings
+# Run container with Mochi-1 optimized settings for single GPU
 docker run -d \
   --name bento-video-service \
   --gpus all \
@@ -41,8 +44,27 @@ docker run -d \
   -v ~/video-test/videos:/data/videos \
   -v ~/video-test/cache:/home/bentoml/.cache \
   -e SHARED_VOLUME_PATH="/data/videos" \
+  -e CUDA_VISIBLE_DEVICES="0" \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
   -e CUDA_LAUNCH_BLOCKING=1 \
+  --shm-size=2g \
+  ghcr.io/the-dsvolk/bento-video-service:latest
+```
+
+### Option B: Dual GPU Setup (12GB+ each)
+```bash
+# Run container with dual GPU allocation
+docker run -d \
+  --name bento-video-service \
+  --gpus all \
+  -p 3000:3000 \
+  -v ~/video-test/videos:/data/videos \
+  -v ~/video-test/cache:/home/bentoml/.cache \
+  -e SHARED_VOLUME_PATH="/data/videos" \
+  -e CUDA_VISIBLE_DEVICES="0,1" \
+  -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+  -e CUDA_LAUNCH_BLOCKING=1 \
+  --shm-size=4g \
   ghcr.io/the-dsvolk/bento-video-service:latest
 ```
 
@@ -56,16 +78,25 @@ docker logs bento-video-service
 curl -X POST http://localhost:3000/health
 ```
 
-Expected response:
+Expected response (Mochi-1):
 ```json
 {
   "status": "healthy",
-  "service": "text-to-video-generator",
+  "service": "text-to-video-generator-mochi-1",
+  "model": "genmo/mochi-1-preview",
+  "variant": "bf16",
   "device": "cuda",
   "cuda_available": true,
-  "gpu_name": "Tesla T4",
-  "gpu_memory_total": 15642329088,
-  "gpu_memory_allocated": 11593857024
+  "video_export_method": "mochi_built_in",
+  "memory_optimizations": {
+    "cpu_offload": true,
+    "vae_tiling": true,
+    "autocast": true
+  },
+  "gpu_name": "NVIDIA RTX 4090",
+  "gpu_memory_total": 25438961664,
+  "gpu_memory_allocated": 22318439424,
+  "recommended_vram": "22GB minimum"
 }
 ```
 
@@ -81,26 +112,34 @@ curl -X POST http://localhost:3000/generate \
   -H "Content-Type: application/json" \
   -d "{
     \"prompt\": \"A serene sunset over calm ocean waves\",
-    \"job_id\": \"$JOB_ID\"
+    \"job_id\": \"$JOB_ID\",
+    \"num_frames\": 84
   }"
+
+# Expected response (Mochi-1):
+# {
+#   "status": "complete",
+#   "success": true,
+#   "job_id": "test-1234567890",
+#   "output_path": "/data/videos/test-1234567890.mp4",
+#   "num_frames": 84,
+#   "duration_seconds": 2.8,
+#   "fps": 30,
+#   "message": "High-quality video generated successfully with Mochi-1"
+# }
 ```
 
 
-## Manual execution from Dcoker
-
-Update the code:
-```bash
-cat <<'EOF' >src/service.py
-
-EOF
-```
+## Manual execution from Docker (Mochi-1) ⚠️ UPDATED
 
 ```bash
-/app/.venv/bin/python3 -c "
-from src.service import TextToVideoGenerator
-service = TextToVideoGenerator()
-print('Testing video generation...')
-result = service.generate('a beautiful sunset over calm ocean waves', 'test-final-123')
+# Test Mochi-1 service directly in container
+docker exec -it bento-video-service /app/.venv/bin/python3 -c "
+from src.service import TextToVideoGeneratorMochi
+service = TextToVideoGeneratorMochi()
+print('Testing Mochi-1 video generation...')
+print('⚠️  This will take several minutes and requires 22GB+ VRAM')
+result = service.generate('a beautiful sunset over calm ocean waves', 'test-mochi-123', num_frames=84)
 print(f'Result: {result}')
 
 # Check if the video file was created
@@ -111,6 +150,8 @@ if result.get('success'):
         file_size = os.path.getsize(output_path)
         print(f'✅ Video file created: {output_path}')
         print(f'📁 File size: {file_size:,} bytes ({file_size/1024/1024:.1f} MB)')
+        print(f'🎬 Duration: {result.get(\"duration_seconds\", \"unknown\")}s at {result.get(\"fps\", \"unknown\")} fps')
+        print(f'🎞️  Frames: {result.get(\"num_frames\", \"unknown\")}')
     else:
         print('❌ Video file not found')
 else:
@@ -118,11 +159,28 @@ else:
 "
 ```
 
-## Notes
+## Notes (Mochi-1 Update)
 
-- Latest code uses Tiny-SD model (2.8GB) instead of SDXL (6GB+) for 55% memory reduction
-- Generates 512x512 images instead of 1024x576 for memory efficiency
-- Reduced inference steps and video frames for Tesla T4 compatibility
-- The service needs ~8GB GPU memory instead of ~13GB with optimizations
-- Tesla T4 with 14.6GB total memory should now work without memory errors
-- Wait for "All models loaded successfully" message in logs before testing
+### ⚠️ **IMPORTANT: Hardware Requirements Changed**
+- **NEW**: Uses Mochi-1 model (~10B parameters) instead of Tiny-SD + SVD
+- **Memory Requirement**: 22GB+ VRAM (bfloat16 variant with optimizations)
+- **NOT compatible** with Tesla T4 (15GB) - requires high-end GPUs
+- **Recommended GPUs**: H100 80GB (optimal), RTX 4090 (24GB), A6000 (48GB), V100 32GB
+
+### ✅ **What's Improved**
+- **Quality**: State-of-the-art video generation with high-fidelity motion
+- **Resolution**: Higher resolution support than previous SD+SVD pipeline
+- **Frame Count**: 84 frames (~2.8s at 30fps) vs 14 frames previously
+- **Prompt Adherence**: Better understanding and following of text prompts
+
+### 🔧 **Technical Changes**
+- Service class: `TextToVideoGenerator` → `TextToVideoGeneratorMochi`
+- Memory optimizations: CPU offload + VAE tiling + autocast enabled
+- Export method: Uses Mochi's built-in video export (no ffmpeg fallback needed)
+- Generation time: Longer due to higher quality (expect 5-15 minutes per video)
+
+### 🚨 **Breaking Changes**
+- **Tesla T4 NO LONGER SUPPORTED** - insufficient VRAM
+- API response format updated with additional metadata
+- Health check response includes Mochi-1 specific information
+- Wait for "Mochi-1 model loaded successfully" in logs before testing

@@ -65,27 +65,27 @@ bentoService:
 
   resources:
     limits:
-      nvidia.com/gpu: 1
-      memory: 16Gi
-      cpu: 4
+      nvidia.com/gpu: 2  # Minimum 2 GPUs per replica as required
+      memory: 32Gi       # Increased for dual GPU setup
+      cpu: 8
     requests:
-      nvidia.com/gpu: 1
-      memory: 8Gi
-      cpu: 2
+      nvidia.com/gpu: 2  # Minimum 2 GPUs per replica as required
+      memory: 24Gi       # Increased for Mochi-1 + dual GPU
+      cpu: 4
 
   autoscaling:
     enabled: true
-    minReplicas: 0  # Scale to zero when not in use
-    maxReplicas: 3
+    minReplicas: 2  # Minimum 2 replicas for redundancy and fault tolerance
+    maxReplicas: 5  # Increased to accommodate higher resource usage
     scaleToZero:
-      enabled: true
+      enabled: false  # Disabled to ensure minimum 2 replicas always running
       timeoutSeconds: 300
 
   env:
     SHARED_VOLUME_PATH: "/shared/videos"
     HF_HOME: "/tmp/huggingface"
     TRANSFORMERS_CACHE: "/tmp/huggingface/transformers"
-    CUDA_VISIBLE_DEVICES: "0"
+    CUDA_VISIBLE_DEVICES: "0,1"  # Enable both GPUs
 
 # Storage configuration
 storage:
@@ -125,10 +125,11 @@ serviceAccount:
   annotations: {}
   name: ""
 
-# Node selector for GPU nodes
+# Node selector for GPU nodes - require nodes with at least 2 GPUs
 nodeSelector:
-  # Example: Select nodes with GPU
-  # accelerator: nvidia-tesla-v100
+  # Ensure nodes have sufficient GPU resources
+  accelerator: nvidia-tesla-v100  # Or appropriate GPU type
+  # gpu-count: "2"  # Uncomment if cluster has this label
 
 # Tolerations for GPU nodes
 tolerations: []
@@ -137,8 +138,20 @@ tolerations: []
   #   operator: Exists
   #   effect: NoSchedule
 
-# Affinity rules
-affinity: {}
+# Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    # Prefer to schedule replicas on different nodes for fault tolerance
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - text-to-video-bento
+        topologyKey: kubernetes.io/hostname
 
 # Monitoring (if Prometheus is available)
 monitoring:

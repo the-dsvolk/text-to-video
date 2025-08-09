@@ -1,8 +1,12 @@
 bentoml>=1.1.11
+# PyTorch with CUDA 12.8 support
+--index-url https://download.pytorch.org/whl/cu128
 torch>=2.0.0,<3.0.0
 torchvision>=0.15.0
 torchaudio>=2.0.0
-diffusers>=0.30.0
+# Latest diffusers for Mochi-1 support
+git+https://github.com/huggingface/diffusers.git
+# Core ML dependencies
 transformers>=4.44.0
 accelerate>=0.30.0
 xformers>=0.0.25
@@ -10,4 +14,5 @@ Pillow>=10.0.0
 safetensors>=0.4.0
 huggingface-hub>=0.20.0
 numpy>=1.24.0
+# Video processing
 imageio[ffmpeg]>=2.25.0

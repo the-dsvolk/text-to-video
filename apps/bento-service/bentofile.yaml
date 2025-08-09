@@ -1,8 +1,8 @@
-service: "src.service:TextToVideoGenerator"
+service: "src.service:TextToVideoGeneratorMochi"
 labels:
   owner: the-dsvolk
   project: text-to-video-generation
-description: "Text-to-Video generation service using Stable Diffusion XL and Stable Video Diffusion"
+description: "High-quality Text-to-Video generation service using Genmo Mochi-1 (bfloat16 variant)"
 
 include:
 - "src/"
@@ -21,7 +21,8 @@ python:
     - torch>=2.0.0
     - torchvision>=0.15.0
     - torchaudio>=2.0.0
-    - diffusers>=0.30.0
+    # Install latest diffusers with Mochi-1 support
+    - git+https://github.com/huggingface/diffusers.git
     - transformers>=4.44.0
     - accelerate>=0.30.0
     - xformers>=0.0.25
