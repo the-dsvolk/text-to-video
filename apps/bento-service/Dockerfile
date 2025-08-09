@@ -1,5 +1,5 @@
-# BentoML Text-to-Video Service using NVIDIA PyTorch base image
-FROM nvcr.io/nvidia/pytorch:25.01-py3
+# BentoML Text-to-Video Service using PyTorch runtime base image
+FROM pytorch/pytorch:2.1.0-cuda12.8-cudnn9-runtime
 
 # Install additional system dependencies
 RUN apt-get update && \

@@ -18,7 +18,7 @@ exclude:
 
 python:
   packages:
-    - "diffusers[torch]>=0.30.0"
+    - diffusers>=0.30.0
     - transformers>=4.46.3
     - accelerate>=0.30.0
     - sentencepiece>=0.1.97
@@ -29,8 +29,8 @@ python:
     - "imageio[ffmpeg]>=2.25.0"
 
 docker:
-  base_image: "nvcr.io/nvidia/pytorch:25.01-py3"
-  python_version: "3.12"
+  base_image: "pytorch/pytorch:2.1.0-cuda12.8-cudnn9-runtime"
+  python_version: "3.11"
   system_packages:
     - git
     - wget
