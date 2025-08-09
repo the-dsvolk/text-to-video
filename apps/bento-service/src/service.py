@@ -40,11 +40,6 @@ class TextToVideoGeneratorMochi:
             torch_dtype=torch.bfloat16
         )
 
-        # Enable memory savings
-        print("Enabling CPU offload and VAE tiling for memory optimization...")
-        self.pipe.enable_model_cpu_offload()
-        self.pipe.enable_vae_tiling()
-
         print("Mochi-1 model loaded successfully with memory optimizations enabled.")
         print("Ready for high-quality video generation!")
 
