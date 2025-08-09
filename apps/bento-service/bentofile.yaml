@@ -24,7 +24,6 @@ docker:
   # python_version removed - use the Python version from base image
   # Install all packages directly to system Python (no virtual environment)
   setup_script: |
-    #!/bin/bash
     set -e
     echo "Installing packages directly to system Python (no virtual environment)"
 
