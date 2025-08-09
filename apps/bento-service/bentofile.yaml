@@ -33,11 +33,9 @@ python:
     - torch>=2.4.1
     - torchvision>=0.19.1
     - transformers>=4.45.2
-    - git+https://github.com/genmoai/mochi.git
   extra_index_url: https://download.pytorch.org/whl/cu128
   index_url: https://pypi.org/simple
   lock_packages: false
-  pip_install_args: "--index-strategy unsafe-best-match"
 
 docker:
   base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
@@ -45,6 +43,11 @@ docker:
   env:
     UV_INDEX_STRATEGY: "unsafe-best-match"
     UV_EXTRA_INDEX_URL: "https://download.pytorch.org/whl/cu128"
+  setup_script: |
+    #!/bin/bash
+    echo "Installing Genmo Mochi package with correct index strategy..."
+    uv pip install --index-strategy unsafe-best-match --extra-index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cu128 git+https://github.com/genmoai/mochi.git
+    echo "Genmo Mochi package installed successfully!"
   system_packages:
     - git
     - wget
