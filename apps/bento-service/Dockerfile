@@ -21,6 +21,7 @@ WORKDIR /workspace
 # Copy source code
 COPY src/ ./src/
 COPY bentofile.yaml .
+COPY start.sh /workspace/
 
 # Set environment variables for Hugging Face caching (use tmpfs mount)
 ENV PYTHONPATH=/workspace
@@ -42,13 +43,8 @@ USER bentoml
 RUN bentoml build && \
     rm -rf ~/.cache/pip/* /tmp/* /var/tmp/*
 
-# Create optimized startup script
-RUN echo '#!/bin/bash\n\
-set -e\n\
-BENTO_TAG=$(bentoml list text_to_video_generator_mochi -o json | jq -r ".[0].tag")\n\
-echo "Starting Mochi-1 service with tag: $BENTO_TAG"\n\
-exec bentoml serve $BENTO_TAG --host 0.0.0.0 --port 3000' > /workspace/start.sh && \
-    chmod +x /workspace/start.sh
+# Set up the startup script
+RUN chmod +x /workspace/start.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=3 \

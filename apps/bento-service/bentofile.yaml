@@ -8,6 +8,7 @@ include:
 - "src/"
 - "requirements.txt"
 - "setup.sh"
+- "start.sh"
 
 exclude:
 - "__pycache__/"
@@ -17,14 +18,19 @@ exclude:
 - "*.pyd"
 - ".DS_Store"
 
-# NO python: section = NO virtual environment created
-# All packages installed via setup_script instead
+python:
+  packages: []
+  lock_packages: false
 
 docker:
   base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
   # python_version removed - use the Python version from base image
   # Install all packages directly to system Python (no virtual environment)
   setup_script: "setup.sh"
+  env:
+    BENTOML_DO_NOT_TRACK: "true"
+    VIRTUAL_ENV: ""
+    PYTHONPATH: "/workspace:/usr/local/lib/python3.11/site-packages"
   system_packages:
     - git
     - wget
