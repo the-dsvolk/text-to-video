@@ -24,6 +24,7 @@ python:
     - "diffusers[torch]>=0.30.0"
     - transformers>=4.46.3
     - accelerate>=0.30.0
+    - sentencepiece>=0.1.97
     - xformers>=0.0.25
     - Pillow>=10.0.0
     - safetensors>=0.4.0
