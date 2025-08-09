@@ -114,7 +114,6 @@ Namespace: text-to-video-app
 ### Container Security
 - **Non-root containers**: All services run as non-root users
 - **Security contexts**: Restricted filesystem access
-- **Image scanning**: Trivy security scans in CI/CD
 - **Minimal base images**: Alpine/slim base images
 
 ### Network Security
