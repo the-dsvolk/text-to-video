@@ -47,10 +47,10 @@ jobs:
         df -h
         echo "=== Available space in /: $(df -h / | awk 'NR==2 {print $4}') ==="
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: '3.11'
 
     - name: Install BentoML and PyTorch
       run: |

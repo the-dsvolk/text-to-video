@@ -1,10 +1,10 @@
+# Core ML packages (PyTorch, torchvision, Pillow already in base image)
 bentoml>=1.1.11
 diffusers>=0.30.0
 transformers>=4.46.3
 accelerate>=0.30.0
 sentencepiece>=0.1.97
 xformers>=0.0.25
-Pillow>=10.0.0
 safetensors>=0.4.0
 huggingface-hub>=0.20.0
 imageio[ffmpeg]>=2.25.0

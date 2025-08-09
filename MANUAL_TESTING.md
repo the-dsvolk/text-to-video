@@ -5,8 +5,8 @@ This guide contains verified working commands for testing the BentoML service wi
 ## Prerequisites
 - SSH access to GPU machine with NVIDIA drivers and Docker installed
 - Docker with GPU support configured
-- **MINIMUM**: 24GB VRAM GPU (e.g., RTX 4090, A6000, V100 32GB)
-- **RECOMMENDED**: 2× GPUs with 12GB+ VRAM each
+- **MINIMUM**: 22GB VRAM GPU (optimized with PyTorch 2.8.0 + no virtual env)
+- **RECOMMENDED**: H100 80GB (optimal), RTX 4090 (24GB), A6000 (48GB)
 
 ## 1. Pull Container Image ✅ WORKING
 
@@ -44,7 +44,7 @@ docker run -d \
   --gpus all \
   -p 3000:3000 \
   -v ~/video-test/videos:/data/videos \
-  -v ~/video-test/cache:/home/bentoml/.cache \
+  -v ~/video-test/cache:/cache \
   -e SHARED_VOLUME_PATH="/data/videos" \
   -e CUDA_VISIBLE_DEVICES="0" \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
@@ -61,7 +61,7 @@ docker run -d \
   --gpus all \
   -p 3000:3000 \
   -v ~/video-test/videos:/data/videos \
-  -v ~/video-test/cache:/home/bentoml/.cache \
+  -v ~/video-test/cache:/cache \
   -e SHARED_VOLUME_PATH="/data/videos" \
   -e CUDA_VISIBLE_DEVICES="0,1" \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
@@ -77,7 +77,7 @@ docker run -d \
   --network host \
   --gpus all \
   -v ~/video-test/videos:/data/videos \
-  -v ~/video-test/cache:/home/bentoml/.cache \
+  -v ~/video-test/cache:/cache \
   -e SHARED_VOLUME_PATH="/data/videos" \
   -e CUDA_VISIBLE_DEVICES="0,1" \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
@@ -156,8 +156,9 @@ curl -X POST http://localhost:3000/generate \
 ## Manual execution from Docker (Mochi-1) ⚠️ UPDATED
 
 ```bash
-# Test Mochi-1 service directly in container
-docker exec -it bento-video-service /app/.venv/bin/python3 -c "
+# Test Mochi-1 service directly in container (NO virtual environment)
+docker exec -it bento-video-service python3 -c "
+import sys; sys.path.append('/workspace')
 from src.service import TextToVideoGeneratorMochi
 service = TextToVideoGeneratorMochi()
 print('Testing Mochi-1 video generation...')
@@ -198,7 +199,10 @@ else:
 
 ### 🔧 **Technical Changes**
 - Service class: `TextToVideoGenerator` → `TextToVideoGeneratorMochi`
-- Memory optimizations: CPU offload + VAE tiling + autocast enabled
+- **Base image**: PyTorch 2.8.0 + CUDA 12.8 + cuDNN 9 (optimized for H100)
+- **Virtual environment**: DISABLED - uses system Python directly (space optimized)
+- **Memory optimizations**: CPU offload + VAE tiling + autocast enabled
+- **Cache location**: `/cache` (not `/home/bentoml/.cache`)
 - Export method: Uses Mochi's built-in video export (no ffmpeg fallback needed)
 - Generation time: Longer due to higher quality (expect 5-15 minutes per video)
 

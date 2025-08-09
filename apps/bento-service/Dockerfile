@@ -1,5 +1,5 @@
 # BentoML Text-to-Video Service using PyTorch runtime base image
-FROM pytorch/pytorch:2.1.0-cuda12.8-cudnn9-runtime
+FROM pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime
 
 # Install additional system dependencies
 RUN apt-get update && \

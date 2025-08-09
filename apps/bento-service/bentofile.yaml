@@ -17,20 +17,31 @@ exclude:
 - ".DS_Store"
 
 python:
-  packages:
-    - diffusers>=0.30.0
-    - transformers>=4.46.3
-    - accelerate>=0.30.0
-    - sentencepiece>=0.1.97
-    - xformers>=0.0.25
-    - Pillow>=10.0.0
-    - safetensors>=0.4.0
-    - huggingface-hub>=0.20.0
-    - "imageio[ffmpeg]>=2.25.0"
+  # NO packages listed = NO virtual environment created
+  # All packages installed via setup_script instead
 
 docker:
-  base_image: "pytorch/pytorch:2.1.0-cuda12.8-cudnn9-runtime"
-  python_version: "3.11"
+  base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
+  # python_version removed - use the Python version from base image
+  # Install all packages directly to system Python (no virtual environment)
+  setup_script: |
+    #!/bin/bash
+    set -e
+    echo "Installing packages directly to system Python (no virtual environment)"
+
+    # Install BentoML and ML packages directly to system Python
+    pip install --no-cache-dir \
+        bentoml>=1.1.11 \
+        diffusers>=0.30.0 \
+        transformers>=4.46.3 \
+        accelerate>=0.30.0 \
+        sentencepiece>=0.1.97 \
+        xformers>=0.0.25 \
+        safetensors>=0.4.0 \
+        huggingface-hub>=0.20.0 \
+        "imageio[ffmpeg]>=2.25.0"
+
+    echo "All packages installed to system Python successfully"
   system_packages:
     - git
     - wget
