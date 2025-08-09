@@ -11,17 +11,23 @@ authors = [
 ]
 dependencies = [
     "bentoml>=1.1.11",
-    "torch>=2.8.0",
-    "diffusers>=0.30.0",
-    "transformers>=4.45.0",
-    "accelerate>=0.34.0",
-    "xformers>=0.0.28",
-    "Pillow>=10.4.0",
-    "safetensors>=0.4.5",
-    "huggingface-hub>=0.25.0",
-    "numpy>=1.26.4",
+    "addict>=2.4.0",
+    "av==13.1.0",
+    "click>=8.1.7",
+    "einops>=0.8.0",
+    "gradio>=3.36.1",
+    "moviepy==1.0.3",
+    "omegaconf>=2.3.0",
+    "pillow==9.5.0",
+    "pyyaml>=6.0.2",
+    "ray>=2.37.0",
+    "sentencepiece>=0.2.0",
+    "setuptools>=75.2.0",
+    "torch>=2.4.1",
+    "torchvision>=0.19.1",
+    "transformers>=4.45.2",
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
@@ -31,13 +37,20 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.7.0",
 ]
+flash = [
+    "flash-attn>=2.6.3"
+]
+torchvision = [
+    "torchvision>=0.15.0",
+    "pyav>=13.1.0"
+]
 
 [tool.black]
 line-length = 112
-target-version = ['py312']
+target-version = ['py311']
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 line-length = 112
 select = [
     "E",  # pycodestyle errors
@@ -54,5 +67,5 @@ ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 strict = true
