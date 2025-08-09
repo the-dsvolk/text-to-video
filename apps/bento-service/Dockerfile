@@ -1,58 +1,58 @@
-# Multi-stage build for BentoML Text-to-Video Service
-# This is an alternative to using bentoml containerize
+# Space-optimized single-stage build for BentoML Text-to-Video Service
+FROM nvcr.io/nvidia/pytorch:25.01-py3
 
-FROM nvcr.io/nvidia/pytorch:25.01-py3 as base
-
-# Install system dependencies
+# Install system dependencies and cleanup in single layer
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get -y --no-install-recommends install \
-    vim htop nvtop python3-dev python3-pip git pciutils sysstat \
-    curl wget ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    git curl wget ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install BentoML (PyTorch already optimized in base image)
-RUN pip3 install --no-cache-dir bentoml>=1.1.11
+# Install BentoML and dependencies with cleanup
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir bentoml>=1.1.11 && \
+    pip3 install --no-cache-dir -r /tmp/requirements.txt && \
+    pip3 cache purge && \
+    rm -rf /tmp/* /var/tmp/* ~/.cache/pip/* /root/.cache/pip/*
 
 # Set working directory
 WORKDIR /workspace
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY src/ ./src/
 COPY bentofile.yaml .
 
-# Set environment variables for Hugging Face caching
+# Set environment variables for Hugging Face caching (use tmpfs mount)
 ENV PYTHONPATH=/workspace
-ENV HF_HOME=/tmp/huggingface
-ENV TRANSFORMERS_CACHE=/tmp/huggingface/transformers
-ENV HF_DATASETS_CACHE=/tmp/huggingface/datasets
+ENV HF_HOME=/cache
+ENV TRANSFORMERS_CACHE=/cache/transformers
+ENV HF_DATASETS_CACHE=/cache/datasets
 ENV CUDA_VISIBLE_DEVICES=0
+ENV PYTHONUNBUFFERED=1
 
-# Create cache directories
-RUN mkdir -p /tmp/huggingface/transformers /tmp/huggingface/datasets
-
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash bentoml \
-    && chown -R bentoml:bentoml /workspace /tmp/huggingface
+# Create non-root user and directories in single layer
+RUN useradd --create-home --shell /bin/bash bentoml && \
+    mkdir -p /cache/transformers /cache/datasets && \
+    chown -R bentoml:bentoml /workspace /cache
 
 # Switch to non-root user
 USER bentoml
 
-# Build the Bento
-RUN bentoml build
+# Build the Bento (cleanup build artifacts)
+RUN bentoml build && \
+    rm -rf ~/.cache/pip/* /tmp/* /var/tmp/*
 
-# Get the latest bento tag and serve it
-RUN echo '#!/bin/bash' > /workspace/start.sh \
-    && echo 'BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r ".[0].tag")' >> /workspace/start.sh \
-    && echo 'bentoml serve $BENTO_TAG --host 0.0.0.0 --port 3000' >> /workspace/start.sh \
-    && chmod +x /workspace/start.sh
+# Create optimized startup script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+BENTO_TAG=$(bentoml list text_to_video_generator_mochi -o json | jq -r ".[0].tag")\n\
+echo "Starting Mochi-1 service with tag: $BENTO_TAG"\n\
+exec bentoml serve $BENTO_TAG --host 0.0.0.0 --port 3000' > /workspace/start.sh && \
+    chmod +x /workspace/start.sh
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
 
 EXPOSE 3000
