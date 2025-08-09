@@ -37,12 +37,14 @@ python:
   extra_index_url: https://download.pytorch.org/whl/cu128
   index_url: https://pypi.org/simple
   lock_packages: false
+  pip_install_args: "--index-strategy unsafe-best-match"
 
 docker:
   base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
   python_version: "3.11"
   env:
     UV_INDEX_STRATEGY: "unsafe-best-match"
+    UV_EXTRA_INDEX_URL: "https://download.pytorch.org/whl/cu128"
   system_packages:
     - git
     - wget
