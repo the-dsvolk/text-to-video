@@ -2,7 +2,7 @@ name: Build BentoML Service
 
 on:
   push:
-    branches: [ '*' ]  # Trigger on any branch
+    branches: [ main, develop, mochi-2 ]
     paths:
       - 'apps/bento-service/**'
       - '.github/workflows/build-bento.yml'

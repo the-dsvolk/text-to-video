@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 112
-target-version = ['py312']
+target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -20,7 +20,7 @@ extend-exclude = '''
 '''
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 line-length = 112
 select = [
     "E",  # pycodestyle errors
@@ -57,4 +57,3 @@ exclude = [
     "node_modules",
     "venv",
 ]
-

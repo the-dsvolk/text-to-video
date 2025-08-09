@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ '*' ]  # Trigger on any branch
+    branches: [ main, develop, mochi-2 ]
   pull_request:
     branches: [ main, develop, mochi-2 ]
 
@@ -57,7 +57,7 @@ jobs:
 
   build-and-push:
     needs: test
-    if: github.event_name == 'push'  # Build on any branch push
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/mochi-2')
     runs-on: ubuntu-latest
     permissions:
       contents: read

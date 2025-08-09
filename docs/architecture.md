@@ -8,7 +8,7 @@ The Text-to-Video generation system is built as a cloud-native microservices arc
 
 ### 1. FastAPI Gateway Service
 - **Purpose**: Public-facing API gateway for video generation requests
-- **Technology**: FastAPI, Python 3.12
+- **Technology**: FastAPI, Python 3.11
 - **Features**:
   - RESTful API endpoints
   - Job management and status tracking
