@@ -1,17 +1,12 @@
-# Space-optimized single-stage build for BentoML Text-to-Video Service
-FROM nvidia/cuda:12.8.0-devel-ubuntu22.04
+# BentoML Text-to-Video Service using NVIDIA PyTorch base image
+FROM nvcr.io/nvidia/pytorch:25.01-py3
 
-# Install system dependencies including Python 3.12 and cleanup in single layer
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+# Install additional system dependencies
+RUN apt-get update && \
     apt-get -y --no-install-recommends install \
-    git curl wget ffmpeg python3 python3-pip python3-dev python3-venv \
-    build-essential && \
+    git wget curl ffmpeg vim less && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Install PyTorch 2.7.x with CUDA 12.8 support (stable version)
-RUN pip3 install --no-cache-dir torch==2.7.1 torchvision==0.17.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
 
 # Install BentoML and dependencies with cleanup
 COPY requirements.txt /tmp/requirements.txt
