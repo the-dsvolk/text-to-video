@@ -18,6 +18,11 @@ exclude:
 
 python:
   packages:
+    # PyTorch with CUDA 12.8 support (stable version)
+    - --extra-index-url https://download.pytorch.org/whl/cu128
+    - torch==2.7.1
+    - torchvision==0.17.1
+    - torchaudio==2.7.1
     # Core ML dependencies with pinned versions (based on NVIDIA production setup)
     - transformers==4.46.3
     - accelerate>=0.30.0
@@ -35,6 +40,9 @@ python:
 
 docker:
   base_image: "nvidia/cuda:12.8.0-devel-ubuntu22.04"
+  env:
+    UV_CACHE_DIR: "/tmp"
+    PIP_CACHE_DIR: "/tmp/pip-cache"
   system_packages:
     - git
     - wget

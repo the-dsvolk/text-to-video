@@ -10,8 +10,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install PyTorch with CUDA 12.8 support
-RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+# Install PyTorch 2.7.x with CUDA 12.8 support (stable version)
+RUN pip3 install --no-cache-dir torch==2.7.1 torchvision==0.17.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
 
 # Install BentoML and dependencies with cleanup
 COPY requirements.txt /tmp/requirements.txt
