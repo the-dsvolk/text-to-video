@@ -1,7 +1,9 @@
 # BentoML and core dependencies
 bentoml>=1.1.11
 
-# AI/ML packages (PyTorch pre-installed in base image)
+# AI/ML packages with CUDA support
+torch>=2.4.1
+torchvision>=0.19.1
 transformers>=4.45.2
 
 # Video and audio processing
@@ -12,13 +14,6 @@ moviepy==1.0.3
 addict>=2.4.0
 einops>=0.8.0
 sentencepiece>=0.2.0
-
-# Web and API
-gradio>=3.36.1
-click>=8.1.7
-
-# Distributed computing
-ray>=2.37.0
 
 # Configuration and utilities
 omegaconf>=2.3.0
