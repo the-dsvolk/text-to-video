@@ -3,8 +3,45 @@
 This guide contains only verified working commands for testing the BentoML service container on a GPU machine.
 
 ## Prerequisites
+```
+# Remove old drivers
+sudo apt-get purge '*nvidia*'
+sudo apt autoremove
+
+
+# Download the CUDA network repository pin file to prioritize this repo
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
+sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
+
+# Download and install the repository's signing key
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+
+# Update your system's package list
+sudo apt-get update
+
+# Clean up the downloaded file
+rm cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get install cuda-drivers-570
+sudo apt-get install nvidia-fabricmanager-570
+sudo systemctl enable --now nvidia-fabricmanager.service
+
+# Container toolkit
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart containerd
+
+```
+Exact page from Nvidia, look for 570.86.15
+https://docs.nvidia.com/vss/latest/content/quickstart.html#install-the-nvidia-driver
+sudo nvidia-ctk runtime configure --runtime=containerd
+
+
+
 - SSH access to GPU machine with NVIDIA drivers and Docker installed
 - Docker with GPU support configured
+
 
 ## 1. Pull Container Image ✅ WORKING
 
