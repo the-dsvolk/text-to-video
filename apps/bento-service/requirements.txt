@@ -1,9 +1,7 @@
 # BentoML and core dependencies
 bentoml>=1.1.11
 
-# AI/ML packages with CUDA support
-torch>=2.4.1
-torchvision>=0.19.1
+# AI/ML packages (PyTorch pre-installed in base image)
 transformers>=4.45.2
 
 # Video and audio processing
