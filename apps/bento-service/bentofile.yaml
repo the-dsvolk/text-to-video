@@ -38,7 +38,6 @@ python:
   lock_packages: false
 
 docker:
-  base_image: "nvidia/cuda:12.8.0-runtime-ubuntu22.04"
   python_version: "3.11"
 
   setup_script: "install_genmo.sh"
