@@ -1,17 +1,26 @@
 # Multi-stage build for BentoML Text-to-Video Service
 # This is an alternative to using bentoml containerize
 
-FROM pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime as base
+FROM nvidia/cuda:12.8.0-devel-ubuntu22.04 as base
 
-# Install system dependencies (Python 3.11 already available in base image)
+# Install system dependencies including Python 3.11
 RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-dev \
+    python3.11-distutils \
+    python3-pip \
     curl \
     wget \
     git \
     build-essential \
     jq \
     ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 
 # Upgrade pip and install BentoML
 RUN python -m pip install --upgrade pip \
