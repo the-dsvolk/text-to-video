@@ -38,7 +38,6 @@ python:
   lock_packages: false
 
 docker:
-  base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
   python_version: "3.11"
 
   setup_script: "install_genmo.sh"
