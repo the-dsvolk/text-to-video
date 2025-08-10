@@ -20,6 +20,8 @@ exclude:
 python:
   requirements_txt: "requirements.txt"
   lock_packages: false
+  extra_index_url:
+    - https://download.pytorch.org/whl/cu128
 
 docker:
   python_version: "3.11"

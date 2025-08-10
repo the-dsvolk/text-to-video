@@ -2,8 +2,8 @@
 bentoml>=1.1.11
 
 # AI/ML packages with CUDA support
-torch>=2.4.1 --index-url https://download.pytorch.org/whl/cu128
-torchvision>=0.19.1 --index-url https://download.pytorch.org/whl/cu128
+torch>=2.4.1
+torchvision>=0.19.1
 transformers>=4.45.2
 
 # Video and audio processing
