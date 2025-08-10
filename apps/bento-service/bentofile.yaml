@@ -40,9 +40,7 @@ python:
 docker:
   base_image: "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime"
   python_version: "3.11"
-  env:
-    UV_INDEX_STRATEGY: "unsafe-best-match"
-    UV_EXTRA_INDEX_URL: "https://download.pytorch.org/whl/cu128"
+
   setup_script: "install_genmo.sh"
   system_packages:
     - git
