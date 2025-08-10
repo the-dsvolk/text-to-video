@@ -71,6 +71,14 @@ jobs:
         BENTO_TAG=$(bentoml list text_to_video_generator -o json | jq -r '.[0].tag')
         echo "bento_tag=$BENTO_TAG" >> $GITHUB_OUTPUT
 
+    - name: Clean Docker System
+      run: |
+        echo "Before cleanup:"
+        df -h
+        docker system prune -a -f
+        echo "After cleanup:"
+        df -h
+
     - name: Containerize Bento
       working-directory: ./apps/bento-service
       env:
