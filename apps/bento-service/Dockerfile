@@ -1,7 +1,7 @@
 # Multi-stage build for BentoML Text-to-Video Service
 # This is an alternative to using bentoml containerize
 
-FROM nvidia/cuda:12.8.0-devel-ubuntu22.04 as base
+FROM nvidia/cuda:12.8.0-runtime-ubuntu22.04 as base
 
 # Install system dependencies including Python 3.11
 RUN apt-get update && apt-get install -y \
