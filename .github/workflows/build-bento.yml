@@ -37,6 +37,16 @@ jobs:
         pip install bentoml==1.4.19
         pip install torch>=2.0.0 torchvision>=0.15.0 torchaudio>=2.0.0 --index-url https://download.pytorch.org/whl/cu128
 
+    - name: Configure Docker to use /mnt directory
+      run: |
+        echo "Moving Docker data to /mnt for more space (66GB available)"
+        sudo systemctl stop docker
+        sudo mkdir -p /mnt/docker
+        sudo rsync -aqxP /var/lib/docker/ /mnt/docker/
+        echo '{"data-root": "/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+        sudo systemctl start docker
+        df -h
+        
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -83,7 +93,12 @@ jobs:
       working-directory: ./apps/bento-service
       env:
         DOCKER_TAGS: ${{ steps.meta.outputs.tags }}
+        TMPDIR: /mnt/tmp
       run: |
+        # Use /mnt for temporary files during build
+        mkdir -p /mnt/tmp
+        export TMPDIR=/mnt/tmp
+        
         # Create a temporary tag for building
         TEMP_TAG="temp-bento:latest"
         bentoml containerize ${{ steps.bento-tag.outputs.bento_tag }} -t $TEMP_TAG --no-cache
