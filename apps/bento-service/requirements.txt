@@ -1,15 +1,28 @@
+# BentoML and core dependencies
 bentoml>=1.1.11
-addict>=2.4.0
+
+# AI/ML packages with CUDA support
+torch>=2.4.1 --index-url https://download.pytorch.org/whl/cu128
+torchvision>=0.19.1 --index-url https://download.pytorch.org/whl/cu128
+transformers>=4.45.2
+
+# Video and audio processing
 av==13.1.0
-click>=8.1.7
-einops>=0.8.0
-gradio>=3.36.1
 moviepy==1.0.3
+
+# ML utilities
+addict>=2.4.0
+einops>=0.8.0
+sentencepiece>=0.2.0
+
+# Web and API
+gradio>=3.36.1
+click>=8.1.7
+
+# Distributed computing
+ray>=2.37.0
+
+# Configuration and utilities
 omegaconf>=2.3.0
 pyyaml>=6.0.2
-ray>=2.37.0
-sentencepiece>=0.2.0
 setuptools>=70.0.0
-torch>=2.4.1
-torchvision>=0.19.1
-transformers>=4.45.2

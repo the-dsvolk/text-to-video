@@ -18,28 +18,12 @@ exclude:
 - ".DS_Store"
 
 python:
-  packages:
-    - addict>=2.4.0
-    - av==13.1.0
-    - click>=8.1.7
-    - einops>=0.8.0
-    - gradio>=3.36.1
-    - moviepy==1.0.3
-    - omegaconf>=2.3.0
-    - pyyaml>=6.0.2
-    - ray>=2.37.0
-    - sentencepiece>=0.2.0
-    - setuptools>=70.0.0
-    - torch>=2.4.1
-    - torchvision>=0.19.1
-    - transformers>=4.45.2
-  extra_index_url: https://download.pytorch.org/whl/cu128
-  index_url: https://pypi.org/simple
+  requirements_txt: "requirements.txt"
   lock_packages: false
 
 docker:
   python_version: "3.11"
-
+  base_image: "nvidia/cuda:12.8.0-runtime-ubuntu22.04"
   setup_script: "install_genmo.sh"
   system_packages:
     - git

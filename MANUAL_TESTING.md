@@ -42,7 +42,6 @@ docker run -d \
   -v ~/video-test/cache:/home/bentoml/.cache \
   -e SHARED_VOLUME_PATH="/data/videos" \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
-  -e CUDA_LAUNCH_BLOCKING=1 \
   ghcr.io/the-dsvolk/bento-video-service:latest
 ```
 
@@ -87,6 +86,29 @@ curl -X POST http://localhost:3000/generate \
 
 
 ## Manual execution from Dcoker
+```bash
+sudo nerdctl run -it   --name bento-video-service   --gpus all   --network host   -v ~/video-test/videos:/data/videos   -v ~/video-test/cache:/cache   -e SHARED_VOLUME_PATH="/data/videos"   -e CUDA_VISIBLE_DEVICES="0,1"   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True   -e CUDA_LAUNCH_BLOCKING=1   -e HF_HOME=/cache   -e TRANSFORMERS_CACHE=/cache/transformers   --shm-size=4g   --user 0   ghcr.io/the-dsvolk/bento-video-service:mochi-2 bash
+```
+
+```
+/app/.venv/bin/python3 -c "
+import torch
+import sys
+sys.path.append('.')
+
+# Initialize CUDA
+print('Initializing CUDA...')
+torch.cuda.init()
+print(f'CUDA ready: {torch.cuda.is_available()}')
+
+# Import and create service
+from src.service import TextToVideoGenerator
+print('Creating Mochi-1 service instance...')
+service = TextToVideoGenerator()
+print('✅ Service created successfully!')
+print('✅ Mochi-1 model loaded and ready!')
+"
+```
 
 Update the code:
 ```bash
