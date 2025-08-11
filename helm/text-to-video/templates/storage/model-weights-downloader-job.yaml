@@ -37,9 +37,10 @@ spec:
           # Install required packages
           pip install --no-cache-dir huggingface_hub
 
-          # Check if models already exist
+          # Check if models already exist (using correct path)
           if [ -f "/data/weights/dit.safetensors" ] && [ -f "/data/weights/decoder.safetensors" ] && [ -f "/data/weights/encoder.safetensors" ]; then
             echo "✅ Model weights already exist, skipping download"
+            ls -la /data/weights/
             exit 0
           fi
 
@@ -113,8 +114,9 @@ spec:
           value: /tmp/hf_home
       volumes:
       - name: model-weights
-        persistentVolumeClaim:
-          claimName: {{ .Values.storage.modelWeights.pvc.name }}
+        hostPath:
+          path: /mnt/raid0/video-test/weights
+          type: Directory
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

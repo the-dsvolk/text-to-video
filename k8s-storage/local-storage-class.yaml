@@ -1,0 +1,65 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-raid0
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: false
+parameters:
+  type: "local"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: shared-videos-pv-raid0
+  labels:
+    type: local
+    app: text-to-video
+    storage-tier: raid0
+spec:
+  storageClassName: local-raid0
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/raid0/shared-videos
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - g471
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: model-weights-pv-raid0
+  labels:
+    type: local
+    app: text-to-video
+    storage-tier: raid0
+spec:
+  storageClassName: local-raid0
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/raid0/model-weights
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - g471

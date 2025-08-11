@@ -16,7 +16,7 @@ fastapi:
 
   image:
     repository: ghcr.io/the-dsvolk/fastapi-video-gateway
-    tag: "latest"
+    tag: "mochi-2"
     pullPolicy: IfNotPresent
 
   service:
@@ -52,7 +52,7 @@ fastapi:
 
   env:
     SHARED_VOLUME_PATH: "/data/videos"
-    KSERVE_URL: "http://text-to-video-generator.text-to-video-app.svc.cluster.local/v1/models/text-to-video-generator:predict"
+    BENTO_SERVICE_URL: "http://text-to-video-bento.text-to-video-app.svc.cluster.local:3000"
 
 # BentoML service configuration (via KServe)
 bentoService:
@@ -60,32 +60,33 @@ bentoService:
 
   image:
     repository: ghcr.io/the-dsvolk/bento-video-service
-    tag: "latest"
+    tag: "mochi-2"
     pullPolicy: IfNotPresent
 
   resources:
     limits:
-      nvidia.com/gpu: 1
-      memory: 16Gi
-      cpu: 4
+      nvidia.com/gpu: 2  # 2 GPUs per service
+      memory: 32Gi       # Increased memory for 2 GPUs
+      cpu: 8             # Increased CPU for 2 GPUs
     requests:
-      nvidia.com/gpu: 1
-      memory: 8Gi
-      cpu: 2
+      nvidia.com/gpu: 2  # 2 GPUs per service
+      memory: 16Gi       # Increased memory for 2 GPUs
+      cpu: 4             # Increased CPU for 2 GPUs
+
+  replicaCount: 2  # Two BentoML services
 
   autoscaling:
-    enabled: true
-    minReplicas: 0  # Scale to zero when not in use
-    maxReplicas: 3
-    scaleToZero:
-      enabled: true
-      timeoutSeconds: 300
+    enabled: false  # Disable autoscaling for fixed GPU allocation
+    minReplicas: 2
+    maxReplicas: 2
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
 
   env:
     SHARED_VOLUME_PATH: "/shared/videos"
     HF_HOME: "/tmp/huggingface"
     TRANSFORMERS_CACHE: "/tmp/huggingface/transformers"
-    CUDA_VISIBLE_DEVICES: "0"
+    CUDA_VISIBLE_DEVICES: "0,1"  # Use 2 GPUs per service
 
 # Storage configuration
 storage:
@@ -95,8 +96,8 @@ storage:
   pvc:
     name: shared-videos-pvc
     accessMode: ReadWriteMany
-    size: 100Gi
-    storageClass: ""  # Use default storage class
+    size: 500Gi
+    storageClass: "local-raid0"  # Use our RAID0 storage class
 
   # Optional: Define a specific Persistent Volume
   pv:
@@ -114,7 +115,7 @@ storage:
       name: model-weights-pvc
       accessMode: ReadWriteOnce  # Single pod access for model loading
       size: 50Gi  # 42GB models + buffer
-      storageClass: ""  # Use default storage class
+      storageClass: "local-raid0"  # Use our RAID0 storage class
 
     # Optional: Define a specific Persistent Volume for model weights
     pv:
@@ -145,15 +146,16 @@ serviceAccount:
 
 # Node selector for GPU nodes
 nodeSelector:
-  # Example: Select nodes with GPU
-  # accelerator: nvidia-tesla-v100
+  kubernetes.io/hostname: g471  # Force scheduling on our GPU node with RAID0
 
 # Tolerations for GPU nodes
-tolerations: []
-  # Example: Tolerate GPU node taints
-  # - key: nvidia.com/gpu
-  #   operator: Exists
-  #   effect: NoSchedule
+tolerations:
+  - key: node.kubernetes.io/disk-pressure
+    operator: Exists
+    effect: NoSchedule
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
 
 # Affinity rules
 affinity: {}

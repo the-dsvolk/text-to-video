@@ -25,8 +25,9 @@ spec:
       containers:
         - name: fastapi-gateway
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.fastapi.image.repository }}:{{ .Values.fastapi.image.tag }}"
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: "{{ .Values.fastapi.image.repository }}:{{ .Values.fastapi.image.tag }}"
           imagePullPolicy: {{ .Values.fastapi.image.pullPolicy }}
           ports:
             - name: http

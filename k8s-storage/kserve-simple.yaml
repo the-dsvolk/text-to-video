@@ -1,0 +1,220 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kserve
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: inferenceservices.serving.kserve.io
+spec:
+  group: serving.kserve.io
+  versions:
+  - name: v1beta1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              predictor:
+                type: object
+                properties:
+                  containers:
+                    type: array
+                    items:
+                      type: object
+                  serviceAccountName:
+                    type: string
+                  volumes:
+                    type: array
+                    items:
+                      type: object
+                  nodeSelector:
+                    type: object
+                  tolerations:
+                    type: array
+                    items:
+                      type: object
+                  affinity:
+                    type: object
+          status:
+            type: object
+  scope: Namespaced
+  names:
+    plural: inferenceservices
+    singular: inferenceservice
+    kind: InferenceService
+    shortNames:
+    - isvc
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servingruntimes.serving.kserve.io
+spec:
+  group: serving.kserve.io
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+          status:
+            type: object
+  scope: Namespaced
+  names:
+    plural: servingruntimes
+    singular: servingruntime
+    kind: ServingRuntime
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kserve-controller-manager
+  namespace: kserve
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kserve-manager-role
+rules:
+- apiGroups:
+  - serving.kserve.io
+  resources:
+  - inferenceservices
+  - servingruntimes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - pods
+  - configmaps
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kserve-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kserve-manager-role
+subjects:
+- kind: ServiceAccount
+  name: kserve-controller-manager
+  namespace: kserve
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inferenceservice-config
+  namespace: kserve
+data:
+  agent: |-
+    {
+        "image" : "kserve/agent:latest",
+        "memoryRequest": "100Mi",
+        "memoryLimit": "1Gi",
+        "cpuRequest": "100m",
+        "cpuLimit": "1"
+    }
+  batcher: |-
+    {
+        "image" : "kserve/agent:latest",
+        "memoryRequest": "1Gi",
+        "memoryLimit": "1Gi",
+        "cpuRequest": "1",
+        "cpuLimit": "1"
+    }
+  storageInitializer: |-
+    {
+        "image" : "kserve/storage-initializer:latest",
+        "memoryRequest": "100Mi",
+        "memoryLimit": "1Gi",
+        "cpuRequest": "100m",
+        "cpuLimit": "1"
+    }
+  deploy: |-
+    {
+      "defaultDeploymentMode": "Serverless"
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kserve-controller-manager
+  namespace: kserve
+  labels:
+    control-plane: kserve-controller-manager
+spec:
+  selector:
+    matchLabels:
+      control-plane: kserve-controller-manager
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        control-plane: kserve-controller-manager
+    spec:
+      serviceAccountName: kserve-controller-manager
+      containers:
+      - name: manager
+        image: kserve/kserve-controller:v0.11.2
+        command:
+        - /manager
+        args:
+        - --metrics-addr=127.0.0.1:8080
+        - --leader-elect=false
+        - --webhook-port=9443
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          limits:
+            cpu: 100m
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      tolerations:
+      - key: node.kubernetes.io/disk-pressure
+        operator: Exists
+        effect: NoSchedule

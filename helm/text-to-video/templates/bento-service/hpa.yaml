@@ -1,0 +1,33 @@
+{{- if and .Values.bentoService.enabled .Values.bentoService.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "text-to-video.fullname" . }}-bento
+  namespace: {{ include "text-to-video.namespace" . }}
+  labels:
+    {{- include "text-to-video.bento.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "text-to-video.fullname" . }}-bento
+  minReplicas: {{ .Values.bentoService.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.bentoService.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.bentoService.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.bentoService.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.bentoService.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.bentoService.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

@@ -1,0 +1,85 @@
+{{- if .Values.bentoService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "text-to-video.fullname" . }}-bento
+  namespace: {{ include "text-to-video.namespace" . }}
+  labels:
+    {{- include "text-to-video.bento.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.bentoService.autoscaling.enabled }}
+  replicas: {{ .Values.bentoService.replicaCount | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "text-to-video.bento.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "text-to-video.bento.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "text-to-video.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: bento-service
+          image: "{{ .Values.bentoService.image.repository }}:{{ .Values.bentoService.image.tag }}"
+          imagePullPolicy: {{ .Values.bentoService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            {{- range $key, $value := .Values.bentoService.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.bentoService.resources | nindent 12 }}
+          volumeMounts:
+            - name: shared-videos
+              mountPath: {{ .Values.bentoService.env.SHARED_VOLUME_PATH }}
+            - name: huggingface-cache
+              mountPath: /tmp/huggingface
+            - name: model-weights
+              mountPath: /data/weights
+              readOnly: true
+          securityContext: {}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 300
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 10
+      volumes:
+        - name: shared-videos
+          persistentVolumeClaim:
+            claimName: {{ .Values.storage.pvc.name }}
+        - name: huggingface-cache
+          emptyDir:
+            sizeLimit: 50Gi
+        - name: model-weights
+          hostPath:
+            path: /mnt/raid0/video-test/weights
+            type: Directory
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
