@@ -145,7 +145,7 @@ Expected response:
   "model": "Mochi-1",
   "model_directory": "/data/weights",
   "cuda_available": true,
-  "gpu_name": "Tesla T4",
+  "gpu_name": "NVIDIA H100",
   "gpu_memory_total": 15642329088,
   "gpu_memory_allocated": 11593857024
 }

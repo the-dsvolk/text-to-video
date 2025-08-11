@@ -45,15 +45,11 @@ The Text-to-Video generation system is built as a cloud-native microservices arc
 
 ### Text-to-Video Generation Flow
 
-1. **Text-to-Image**: Stable Diffusion XL (SDXL)
+1. **Text-to-Video**: Genmo Mochi-1
    - Input: Text prompt
-   - Output: High-quality 1024x576 initial image
-   - Model: `stabilityai/stable-diffusion-xl-base-1.0`
-
-2. **Image-to-Video**: Stable Video Diffusion (SVD)
-   - Input: Generated image
-   - Output: Video sequence (25 frames)
-   - Model: `stabilityai/stable-video-diffusion-img2vid-xt`
+   - Output: High-quality 480x848 video sequence (31 frames)
+   - Model: `genmo/mochi-1-preview`
+   - Features: State-of-the-art text-to-video generation with superior temporal consistency
 
 3. **Video Encoding**: ImageIO with FFmpeg
    - Input: Frame sequence

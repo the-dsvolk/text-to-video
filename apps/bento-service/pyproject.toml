@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "bento-video-service"
 version = "0.1.0"
-description = "BentoML Text-to-Video Generation Service using Stable Diffusion XL and Stable Video Diffusion"
+description = "BentoML Text-to-Video Generation Service using Genmo Mochi-1"
 authors = [
     {name = "Dmitry Volkov", email = "the.dsvolk@icloud.com"},
 ]
