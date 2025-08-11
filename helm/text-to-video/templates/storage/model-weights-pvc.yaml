@@ -1,0 +1,26 @@
+{{- if and .Values.storage.enabled .Values.storage.modelWeights.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.storage.modelWeights.pvc.name }}
+  namespace: {{ include "text-to-video.namespace" . }}
+  labels:
+    {{- include "text-to-video.labels" . | nindent 4 }}
+    app.kubernetes.io/component: model-storage
+  annotations:
+    # Add annotation to indicate this PVC contains large model files
+    text-to-video.app/model-type: "mochi-1-preview"
+    text-to-video.app/model-size: "42GB"
+spec:
+  accessModes:
+    - {{ .Values.storage.modelWeights.pvc.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.storage.modelWeights.pvc.size }}
+  {{- if .Values.storage.modelWeights.pvc.storageClass }}
+  storageClassName: {{ .Values.storage.modelWeights.pvc.storageClass }}
+  {{- end }}
+  {{- if .Values.storage.modelWeights.pv.enabled }}
+  volumeName: {{ .Values.storage.modelWeights.pv.name }}
+  {{- end }}
+{{- end }}

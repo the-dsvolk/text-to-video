@@ -34,3 +34,5 @@ uv pip install --index-strategy unsafe-best-match \
   ray[default]
 
 echo "Pillow and Genmo Mochi packages installed successfully (without flash-attn/triton)!"
+echo "📋 Note: Model weights (42GB+) need to be downloaded separately at runtime"
+echo "📋 Use persistent volumes or init containers for model storage in production"

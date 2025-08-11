@@ -46,3 +46,27 @@
    kubectl get inferenceservices -n {{ include "text-to-video.namespace" . }}
 {{- end }}
 
+{{- if and .Values.storage.enabled .Values.storage.modelWeights.enabled }}
+6. Model Weights Information:
+
+   📊 Model Storage:
+   - PVC Name: {{ .Values.storage.modelWeights.pvc.name }}
+   - Mount Path: /data/weights
+   - Total Size: ~42GB (Mochi-1 model weights)
+
+   🔍 Check model weights status:
+   kubectl get pvc {{ .Values.storage.modelWeights.pvc.name }} -n {{ include "text-to-video.namespace" . }}
+
+   📥 Model weights are automatically downloaded via Helm hook job.
+       To manually trigger download or check status:
+   kubectl get jobs -n {{ include "text-to-video.namespace" . }} -l app.kubernetes.io/component=model-downloader
+
+   ⚠️  Note: First deployment may take 10-30 minutes due to 42GB model download.
+        Subsequent deployments will reuse cached weights.
+
+   🔧 Manual model download (if needed):
+   kubectl exec -it <bento-service-pod> -n {{ include "text-to-video.namespace" . }} -- bash
+   # Inside pod:
+   # pip install huggingface_hub
+   # python3 -c "from huggingface_hub import snapshot_download; snapshot_download('genmo/mochi-1-preview', local_dir='/data/weights')"
+{{- end }}

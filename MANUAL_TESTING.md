@@ -53,42 +53,87 @@ docker pull ghcr.io/the-dsvolk/bento-video-service:latest
 ## 2. Create Local Directories ✅ WORKING
 
 ```bash
-# Create directories for video output and shared data
-mkdir -p ~/video-test/videos ~/video-test/data ~/video-test/cache
+# Create directories for video output, model weights, and cache
+mkdir -p ~/video-test/videos ~/video-test/weights ~/video-test/cache
 
 # Set permissions
-chmod 755 ~/video-test/videos ~/video-test/data ~/video-test/cache
+chmod 755 ~/video-test/videos ~/video-test/weights ~/video-test/cache
 ```
 
-## 3. Run Container with Memory Optimization ✅ WORKING
+## 3. Download Mochi Model Weights ✅ REQUIRED
 
-# Stop and remove current container
+The Mochi model requires ~42GB of weights that must be downloaded separately:
+
+### Option A: Using Hugging Face CLI - Specific Files Only (Recommended)
 
 ```bash
-docker stop bento-video-service
-docker rm bento-video-service
+# Install Hugging Face CLI
+pip install --upgrade huggingface_hub[cli]
+
+# Login to Hugging Face (optional, for better download speeds)
+huggingface-cli login
+
+# Download only the 3 required model files
+cd ~/video-test/weights
+
+# Download each file individually to avoid downloading the entire repo
+huggingface-cli download genmo/mochi-1-preview decoder.safetensors --local-dir .
+huggingface-cli download genmo/mochi-1-preview encoder.safetensors --local-dir .
+huggingface-cli download genmo/mochi-1-preview dit.safetensors --local-dir .
+
+# Verify downloads (should see exactly 3 files, ~42GB total)
+ls -lh ~/video-test/weights/
+# Expected files:
+# - dit.safetensors (~40GB)
+# - decoder.safetensors (~1.4GB)
+# - encoder.safetensors (~389MB)
+```
+
+⚠️ **Important Notes:**
+- Total download size: ~42GB
+- Download time: 10-60 minutes depending on internet speed
+- Ensure you have at least 50GB free disk space
+- The container expects weights at `/data/weights` (mounted from `~/video-test/weights`)
+
+## 4. Run Container with Model Weights ✅ WORKING
+
+```bash
+# Stop and remove any existing container
+docker stop bento-video-service 2>/dev/null || true
+docker rm bento-video-service 2>/dev/null || true
 ```
 
 ```bash
-# Run container with optimized PyTorch CUDA memory settings
+# Run container with model weights and optimized settings
 docker run -d \
   --name bento-video-service \
   --gpus all \
   -p 3000:3000 \
   -v ~/video-test/videos:/data/videos \
+  -v ~/video-test/weights:/data/weights:ro \
   -v ~/video-test/cache:/home/bentoml/.cache \
   -e SHARED_VOLUME_PATH="/data/videos" \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
-  ghcr.io/the-dsvolk/bento-video-service:latest
+  ghcr.io/the-dsvolk/bento-video-service:mochi-2
 ```
 
-## 4. Check Service Health ✅ WORKING
+⚠️ **Key Changes:**
+- Added `-v ~/video-test/weights:/data/weights:ro` for model weights (read-only)
+- Updated image tag to `:mochi-2` (latest with Genmo support)
+- Container will now find models at `/data/weights` and load successfully
+
+## 5. Check Service Health ✅ WORKING
 
 ```bash
-# Wait for models to load (check logs first)
-docker logs bento-video-service
+# Wait for models to load (check logs first - may take 5-10 minutes for first load)
+docker logs -f bento-video-service
 
-# Test health endpoint
+# Look for these success messages:
+# - "Loading Mochi-1 model from /data/weights..."
+# - "Mochi-1 model loaded successfully!"
+# - Model memory movements (CPU ↔ GPU)
+
+# Test health endpoint (wait for successful model loading)
 curl -X POST http://localhost:3000/health
 ```
 
@@ -96,8 +141,9 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "service": "text-to-video-generator",
-  "device": "cuda",
+  "service": "text-to-video-generator-mochi",
+  "model": "Mochi-1",
+  "model_directory": "/data/weights",
   "cuda_available": true,
   "gpu_name": "Tesla T4",
   "gpu_memory_total": 15642329088,
@@ -105,8 +151,7 @@ Expected response:
 }
 ```
 
-
-## Sample Generation Test ✅ WORKING
+## 6. Mochi Video Generation Test ✅ WORKING
 
 ```bash
 # Test video generation with optimized settings
@@ -122,10 +167,29 @@ curl -X POST http://localhost:3000/generate \
 ```
 
 
-## Manual execution from Dcoker
+## 7. Manual Docker Execution for Debugging
+
 ```bash
-sudo nerdctl run -it   --name bento-video-service   --gpus all   --network host   -v ~/video-test/videos:/data/videos   -v ~/video-test/cache:/cache   -e SHARED_VOLUME_PATH="/data/videos"   -e CUDA_VISIBLE_DEVICES="0,1"   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True   -e CUDA_LAUNCH_BLOCKING=1   -e HF_HOME=/cache   -e TRANSFORMERS_CACHE=/cache/transformers   --shm-size=4g   --user 0   ghcr.io/the-dsvolk/bento-video-service:mochi-2 bash
+# Interactive container with all volumes mounted
+sudo nerdctl run -it \
+  --name bento-video-service-debug \
+  --gpus all \
+  --network host \
+  -v ~/video-test/videos:/data/videos \
+  -v ~/video-test/weights:/data/weights:ro \
+  -v ~/video-test/cache:/cache \
+  -e SHARED_VOLUME_PATH="/data/videos" \
+  -e CUDA_VISIBLE_DEVICES="0,1" \
+  -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+  -e CUDA_LAUNCH_BLOCKING=1 \
+  -e HF_HOME=/cache \
+  -e TRANSFORMERS_CACHE=/cache/transformers \
+  --shm-size=4g \
+  --user 0 \
+  ghcr.io/the-dsvolk/bento-video-service:mochi-2 bash
 ```
+
+### Debug Commands Inside Container:
 
 ```
 /app/.venv/bin/python3 -c "
@@ -179,9 +243,27 @@ else:
 
 ## Notes
 
-- Latest code uses Tiny-SD model (2.8GB) instead of SDXL (6GB+) for 55% memory reduction
-- Generates 512x512 images instead of 1024x576 for memory efficiency
-- Reduced inference steps and video frames for Tesla T4 compatibility
-- The service needs ~8GB GPU memory instead of ~13GB with optimizations
-- Tesla T4 with 14.6GB total memory should now work without memory errors
-- Wait for "All models loaded successfully" message in logs before testing
+### Mochi Model Specifications:
+- **Model**: Genmo Mochi-1 Preview (state-of-the-art text-to-video)
+- **Model Size**: ~42GB total (dit: 40GB, decoder: 1.4GB, encoder: 389MB)
+- **Video Output**: 480x848 resolution, 31 frames default (~2.6 seconds at 12fps)
+- **GPU Memory**: ~24-30GB continuous usage (no CPU offloading for max performance)
+- **Loading Time**: 5-10 minutes for initial model load (Ray initialization + model loading)
+
+### Performance Optimizations:
+- **No CPU Offloading**: Models stay on GPU for maximum performance (faster inference)
+- **Tiled Spatial Decoding**: Reduces memory footprint during video decoding
+- **Memory Management**: Uses `expandable_segments:True` for dynamic GPU memory allocation
+- **BF16 Precision**: Uses bfloat16 for memory efficiency while maintaining quality
+
+### Hardware Requirements:
+- **Minimum**: 24GB GPU memory (e.g., RTX 4090, A100) - **REQUIRED** without CPU offloading
+- **Recommended**: 32GB+ GPU memory (e.g., A100 40GB, H100) for optimal performance
+- **Disk Space**: 50GB+ for model weights and temporary files
+- **RAM**: 16GB+ system memory recommended
+
+### Troubleshooting:
+- Wait for "Mochi-1 model loaded successfully!" before testing
+- Check `/data/weights` contains all 3 model files (dit.safetensors, decoder.safetensors, encoder.safetensors)
+- Monitor GPU memory usage: `nvidia-smi` - should see ~24-30GB continuous usage
+- First generation may take 5-15 minutes due to model compilation and caching

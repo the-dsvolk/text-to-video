@@ -32,6 +32,11 @@ spec:
             mountPath: {{ .Values.bentoService.env.SHARED_VOLUME_PATH }}
           - name: huggingface-cache
             mountPath: /tmp/huggingface
+          {{- if .Values.storage.modelWeights.enabled }}
+          - name: model-weights
+            mountPath: /data/weights
+            readOnly: true
+          {{- end }}
         securityContext:
           {{- toYaml .Values.securityContext | nindent 10 }}
     volumes:
@@ -41,6 +46,11 @@ spec:
       - name: huggingface-cache
         emptyDir:
           sizeLimit: 50Gi
+      {{- if .Values.storage.modelWeights.enabled }}
+      - name: model-weights
+        persistentVolumeClaim:
+          claimName: {{ .Values.storage.modelWeights.pvc.name }}
+      {{- end }}
     {{- with .Values.nodeSelector }}
     nodeSelector:
       {{- toYaml . | nindent 6 }}

@@ -35,10 +35,29 @@ class TextToVideoGenerator:
         self.video_storage_path = Path(VIDEO_STORAGE_PATH)
         self.video_storage_path.mkdir(parents=True, exist_ok=True)
 
-        # Model directory - assuming weights are in /workspace/weights/
-        self.mochi_dir = Path("/workspace/weights")
+        # Model directory - check multiple possible locations
+        possible_dirs = [
+            Path("/workspace/weights"),      # Default location
+            Path("/data/weights"),           # Persistent volume mount
+        ]
 
-        print("Loading Mochi-1 model using official API...")
+        self.mochi_dir = None
+        for dir_path in possible_dirs:
+            if dir_path.exists() and (dir_path / "dit.safetensors").exists():
+                self.mochi_dir = dir_path
+                break
+
+        if self.mochi_dir is None:
+            raise FileNotFoundError(
+                "❌ Mochi model weights not found!\n"
+                "📥 Download weights manually:\n"
+                "   1. Create directory: mkdir -p /workspace/weights\n"
+                "   2. Download from: https://huggingface.co/genmo/mochi-1-preview\n"
+                "   3. Required files: dit.safetensors (40GB), decoder.safetensors (1.4GB), encoder.safetensors (389MB)\n"
+                "📋 Or use persistent volumes in production deployment"
+            )
+
+        print(f"Loading Mochi-1 model from {self.mochi_dir}...")
         self.pipeline = MochiSingleGPUPipeline(
             text_encoder_factory=T5ModelFactory(),
             dit_factory=DitModelFactory(
@@ -46,11 +65,13 @@ class TextToVideoGenerator:
                 model_dtype="bf16"
             ),
             decoder_factory=DecoderModelFactory(
-                model_path=str(self.mochi_dir / "vae.safetensors"),
-                model_stats_path=str(self.mochi_dir / "vae_stats.json"),
+                model_path=str(self.mochi_dir / "decoder.safetensors"),
             ),
-            cpu_offload=True,
-            decode_type="tiled_full",
+            cpu_offload=False,
+            decode_type="tiled_spatial",
+            fast_init=True,
+            strict_load=True,
+            decode_args=dict(overlap=8),
         )
         print("Mochi-1 model loaded successfully!")
 

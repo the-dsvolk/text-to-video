@@ -1,0 +1,126 @@
+{{- if and .Values.storage.enabled .Values.storage.modelWeights.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "text-to-video.fullname" . }}-model-downloader
+  namespace: {{ include "text-to-video.namespace" . }}
+  labels:
+    {{- include "text-to-video.labels" . | nindent 4 }}
+    app.kubernetes.io/component: model-downloader
+  annotations:
+    # This job downloads the large Mochi model weights
+    text-to-video.app/model-type: "mochi-1-preview"
+    text-to-video.app/model-size: "42GB"
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 3600  # Clean up after 1 hour
+  template:
+    metadata:
+      labels:
+        {{- include "text-to-video.labels" . | nindent 8 }}
+        app.kubernetes.io/component: model-downloader
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "text-to-video.serviceAccountName" . }}
+      containers:
+      - name: model-downloader
+        image: python:3.11-slim
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          echo "🚀 Starting Mochi model weights download..."
+
+          # Install required packages
+          pip install --no-cache-dir huggingface_hub
+
+          # Check if models already exist
+          if [ -f "/data/weights/dit.safetensors" ] && [ -f "/data/weights/decoder.safetensors" ] && [ -f "/data/weights/encoder.safetensors" ]; then
+            echo "✅ Model weights already exist, skipping download"
+            exit 0
+          fi
+
+          # Create weights directory
+          mkdir -p /data/weights
+          cd /data/weights
+
+                    # Download only the 3 required model weights (not the entire repo)
+          python3 -c "
+          from huggingface_hub import hf_hub_download
+          import os
+
+          print('📥 Downloading only required Mochi-1 model files (42GB total)...')
+          print('ℹ️  Downloading 3 specific files to avoid downloading entire 34-file repository')
+
+          # Only download the 3 files our service actually needs
+          required_files = ['decoder.safetensors', 'encoder.safetensors', 'dit.safetensors']
+
+          for filename in required_files:
+              print(f'⬇️  Downloading {filename}...')
+              hf_hub_download(
+                  repo_id='genmo/mochi-1-preview',
+                  filename=filename,
+                  local_dir='/data/weights',
+                  local_dir_use_symlinks=False
+              )
+              print(f'✅ Downloaded {filename}')
+
+          print('🎉 All required model weights downloaded successfully!')
+          print(f'📁 Downloaded {len(required_files)} files instead of 34 repository files')
+          "
+
+          # Verify downloads
+          echo "🔍 Verifying downloaded files..."
+          ls -la /data/weights/
+
+          # Check file sizes (approximate)
+          if [ ! -s "/data/weights/dit.safetensors" ]; then
+            echo "❌ dit.safetensors is missing or empty"
+            exit 1
+          fi
+
+          if [ ! -s "/data/weights/decoder.safetensors" ]; then
+            echo "❌ decoder.safetensors is missing or empty"
+            exit 1
+          fi
+
+          if [ ! -s "/data/weights/encoder.safetensors" ]; then
+            echo "❌ encoder.safetensors is missing or empty"
+            exit 1
+          fi
+
+          echo "✅ All model weights verified successfully!"
+          echo "📊 Total storage used:"
+          du -sh /data/weights/
+
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 500m
+          limits:
+            memory: 2Gi
+            cpu: 1
+        volumeMounts:
+        - name: model-weights
+          mountPath: /data/weights
+        env:
+        - name: HF_HUB_CACHE
+          value: /tmp/hf_cache
+        - name: HF_HOME
+          value: /tmp/hf_home
+      volumes:
+      - name: model-weights
+        persistentVolumeClaim:
+          claimName: {{ .Values.storage.modelWeights.pvc.name }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

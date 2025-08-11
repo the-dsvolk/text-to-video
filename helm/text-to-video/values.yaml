@@ -91,7 +91,7 @@ bentoService:
 storage:
   enabled: true
 
-  # Persistent Volume Claim
+  # Persistent Volume Claim for shared videos
   pvc:
     name: shared-videos-pvc
     accessMode: ReadWriteMany
@@ -106,6 +106,24 @@ storage:
     accessMode: ReadWriteMany
     hostPath: /data/shared-videos  # For local testing
     storageClass: manual
+
+  # Model weights storage (42GB+ for Mochi models)
+  modelWeights:
+    enabled: true
+    pvc:
+      name: model-weights-pvc
+      accessMode: ReadWriteOnce  # Single pod access for model loading
+      size: 50Gi  # 42GB models + buffer
+      storageClass: ""  # Use default storage class
+
+    # Optional: Define a specific Persistent Volume for model weights
+    pv:
+      enabled: false
+      name: model-weights-pv
+      capacity: 50Gi
+      accessMode: ReadWriteOnce
+      hostPath: /data/model-weights  # For local testing
+      storageClass: manual
 
 # Redis removed - using file-system based job tracking
 
